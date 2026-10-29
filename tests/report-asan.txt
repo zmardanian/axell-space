@@ -1,0 +1,62 @@
+PASS  BOOTH DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                              1.0319 x  [0.9 .. 1.1]
+PASS  BOOTH DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                              1.0391 x  [0.9 .. 1.1]
+PASS  BOOTH: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz                                  10.0000 ms  [0 .. 40]
+PASS  BOOTH: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz                                          0.0488   [0 .. 0.25]
+PASS  ROOM DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                               1.0239 x  [0.9 .. 1.1]
+PASS  ROOM DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                               1.0034 x  [0.9 .. 1.1]
+PASS  ROOM: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz                                   10.0000 ms  [0 .. 40]
+PASS  ROOM: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz                                           0.0392   [0 .. 0.25]
+PASS  PLATE DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                              1.0265 x  [0.9 .. 1.1]
+PASS  PLATE DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                              1.0089 x  [0.9 .. 1.1]
+PASS  PLATE: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz                                  20.0000 ms  [0 .. 40]
+PASS  PLATE: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz                                          0.0392   [0 .. 0.25]
+PASS  HALL DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                               1.0258 x  [0.9 .. 1.1]
+PASS  HALL DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                               1.0233 x  [0.9 .. 1.1]
+PASS  HALL: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz                                   20.0000 ms  [0 .. 40]
+PASS  HALL: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz                                           0.0366   [0 .. 0.25]
+PASS  DAMPING 100 %: RT60 at 8 kHz re 1 kHz @ 48.0 kHz                                                              0.5474 x  [0.4 .. 0.65]
+PASS  PRE-DELAY 50 ms: the reverb starts after look-ahead + 50 ms (re that) @ 48.0 kHz                              5.7500 ms  [0 .. 12]
+PASS  SYNC 1/4 at 120 BPM: first repeat at 500 ms (error) @ 48.0 kHz                                                0.0000 ms  [0 .. 0.1]
+PASS  SYNC 1/4 at 120 BPM: repeats every 500 ms - 2nd and 3rd (largest error) @ 48.0 kHz                            0.0208 ms  [0 .. 0.1]
+PASS  FEEDBACK 50 %: each repeat 6 dB under the last (1 kHz burst, energy, 2nd re 1st) @ 48.0 kHz                  -6.0206 dB  [-6.5 .. -5.5]
+PASS  PING-PONG, 180 ms: 1st repeat on the left (L re R) @ 48.0 kHz                                               236.7521 dB  [20 .. 400]
+PASS  PING-PONG: 2nd repeat on the right (L re R) @ 48.0 kHz                                                     -176.7957 dB  [-400 .. -20]
+PASS  DELAY switched off at 0.6 s: the repeat due at 1.0 s still sounds @ 48.0 kHz                                 -9.3894 dBFS  [-20 .. 0]
+PASS  ESS DUCK 12 dB (decision forced on the esses): the esses reaching the effects (re off) @ 48.0 kHz            -9.9339 dB  [-14 .. -6]
+PASS  ESS DUCK: the vowels reaching the effects (re ESS DUCK off) @ 48.0 kHz                                       -0.0000 dB  [-0.5 .. 0]
+PASS  VOICE DUCK 12 dB: the reverb while the voice is loud (re no ducking) @ 48.0 kHz                             -11.9999 dB  [-14 .. -6]
+PASS  VOICE DUCK: the reverb in the gaps comes back (re no ducking) @ 48.0 kHz                                     -3.6235 dB  [-6 .. 0.5]
+PASS  MIX 0 %: the output is the input (max difference) @ 48.0 kHz                                                  0.0000   [0 .. 0]
+PASS  OUTPUT -6 dB at MIX 0 % @ 48.0 kHz                                                                           -6.0000 dB  [-6.01 .. -5.99]
+PASS  every preset: silence in -> silence out (non-zero samples) @ 48.0 kHz                                         0.0000   [0 .. 0]
+PASS  every preset: NaN / Inf in -> finite output (non-finite samples) @ 48.0 kHz                                   0.0000   [0 .. 0]
+PASS  every preset: blocks of 512 vs random 1-2048 (max difference) @ 48.0 kHz                                      0.0000   [0 .. 1e-06]
+PASS  TYPE switched while ringing: largest sample step re the input's @ 48.0 kHz                                    1.0160 x  [0 .. 1.6]
+PASS  no memory allocation in process() (every preset, random blocks)                                               0.0000 allocs  [0 .. 0]
+ALL PASS: 35 of 35 checks passed (27.5 s)
+PASS  parameter count = 29
+PASS  every parameter in its frozen place, version hint 1
+PASS  defaults = the engine's defaults (= the Init preset)
+PASS  no latency; tail length covers the longest reverb
+PASS  every factory preset applies its exact settings (13)
+PASS  state restore: every parameter identical
+PASS  A/B: each slot keeps its own settings
+PASS  MIX turned to 0 %: after its glide, the output is the input, sample for sample @ 44.1 kHz
+PASS  MIX 30 %: the effect is heard, every sample finite @ 44.1 kHz
+PASS  host bypass: after the 10 ms crossfade, exactly the input @ 44.1 kHz
+PASS  MIX turned to 0 %: after its glide, the output is the input, sample for sample @ 48.0 kHz
+PASS  MIX 30 %: the effect is heard, every sample finite @ 48.0 kHz
+PASS  host bypass: after the 10 ms crossfade, exactly the input @ 48.0 kHz
+PASS  MIX turned to 0 %: after its glide, the output is the input, sample for sample @ 96.0 kHz
+PASS  MIX 30 %: the effect is heard, every sample finite @ 96.0 kHz
+PASS  host bypass: after the 10 ms crossfade, exactly the input @ 96.0 kHz
+PASS  MIX turned to 0 %: after its glide, the output is the input, sample for sample @ 192.0 kHz
+PASS  MIX 30 %: the effect is heard, every sample finite @ 192.0 kHz
+PASS  host bypass: after the 10 ms crossfade, exactly the input @ 192.0 kHz
+PASS  mono layout accepted
+PASS  mono, blocks larger than announced: processes, finite
+PASS  without a host transport the tempo is 120 BPM
+PASS  editor: opens / closes 5x while processing (100 % size)
+PASS  editor: resizable 75-200 %
+PASS  editor: re-opens at the last used size (150 %)
+ALL PASS: 25 of 25 plugin checks passed

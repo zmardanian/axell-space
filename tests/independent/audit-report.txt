@@ -1,0 +1,70 @@
+PASS  silence in -> silence out, every reverb type with the delay on @ 44100: peak 0
+PASS  MIX 0 %: output = input, sample for sample @ 44100: max error 0
+PASS  host bypass: output = input, sample for sample @ 44100: max error 0
+PASS  silence in -> silence out, every reverb type with the delay on @ 48000: peak 0
+PASS  MIX 0 %: output = input, sample for sample @ 48000: max error 0
+PASS  host bypass: output = input, sample for sample @ 48000: max error 0
+PASS  silence in -> silence out, every reverb type with the delay on @ 96000: peak 0
+PASS  MIX 0 %: output = input, sample for sample @ 96000: max error 0
+PASS  host bypass: output = input, sample for sample @ 96000: max error 0
+PASS  blocks of 512 vs random 1-4096 samples: the same output (reverb + delay + ducking): max difference 0
+PASS  mono track (1 in / 1 out), 700-sample blocks: finite, the effect present: peak 0.197
+PASS  Booth, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.621 s (+3.5 %)
+PASS  Booth, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 1.964 s (-1.8 %)
+PASS  Booth: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 10 ms (limit 50)
+PASS  Booth: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.052 (limit 0.3)
+PASS  Booth, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 4.989 s (-0.2 %)
+PASS  Room, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.619 s (+3.2 %)
+PASS  Room, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 1.992 s (-0.4 %)
+PASS  Room: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 10 ms (limit 50)
+PASS  Room: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.034 (limit 0.3)
+PASS  Room, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 4.957 s (-0.9 %)
+PASS  Plate, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.613 s (+2.1 %)
+PASS  Plate, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 1.984 s (-0.8 %)
+PASS  Plate: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 15 ms (limit 50)
+PASS  Plate: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.029 (limit 0.3)
+PASS  Plate, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 4.979 s (-0.4 %)
+PASS  Hall, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.610 s (+1.6 %)
+PASS  Hall, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 2.008 s (+0.4 %)
+PASS  Hall: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 20 ms (limit 50)
+PASS  Hall: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.026 (limit 0.3)
+PASS  Hall, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 5.004 s (+0.1 %)
+PASS  Booth, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 2.047 s (+2.3 %)
+PASS  Booth: echo density reaches 0.9 (Gaussian) after the first sound @ 96000: 10 ms (limit 50)
+PASS  Booth: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.040 (limit 0.3)
+PASS  Room, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 1.986 s (-0.7 %)
+PASS  Room: echo density reaches 0.9 (Gaussian) after the first sound @ 96000: 10 ms (limit 50)
+PASS  Room: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.034 (limit 0.3)
+PASS  Plate, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 1.991 s (-0.5 %)
+PASS  Plate: echo density reaches 0.9 (Gaussian) after the first sound @ 96000: 20 ms (limit 50)
+PASS  Plate: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.027 (limit 0.3)
+PASS  Hall, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 2.009 s (+0.5 %)
+PASS  Hall: echo density reaches 0.9 (Gaussian) after the first sound @ 96000: 25 ms (limit 50)
+PASS  Hall: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.019 (limit 0.3)
+PASS  DAMPING 100 %: the 8 kHz decay re the 1 kHz decay @ 44100: 0.57 x (0.5 by design)
+PASS  DAMPING 100 %: the 8 kHz decay re the 1 kHz decay @ 96000: 0.59 x (0.5 by design)
+PASS  PRE-DELAY 80 ms: the reverb starts 80 ms later than at 0 ms: 80.06 ms
+PASS  DELAY 300 ms: repeats at 300 / 600 / 900 ms (largest error) @ 44100: 0.023 ms
+PASS  FEEDBACK 50 %: the 2nd repeat re the 1st (1 kHz burst) @ 44100: -6.02 dB (-6.02 expected)
+PASS  PING-PONG: repeats alternate left / right (L re R at 180 / 360 ms) @ 44100: 238 / -175 dB
+PASS  SYNC 1/4 without a host tempo (120 BPM): the repeat at 500 ms @ 44100: 500.000 ms
+PASS  DELAY 300 ms: repeats at 300 / 600 / 900 ms (largest error) @ 48000: 0.021 ms
+PASS  FEEDBACK 50 %: the 2nd repeat re the 1st (1 kHz burst) @ 48000: -6.02 dB (-6.02 expected)
+PASS  PING-PONG: repeats alternate left / right (L re R at 180 / 360 ms) @ 48000: 237 / -176 dB
+PASS  SYNC 1/4 without a host tempo (120 BPM): the repeat at 500 ms @ 48000: 500.000 ms
+PASS  DELAY 300 ms: repeats at 300 / 600 / 900 ms (largest error) @ 96000: 0.031 ms
+PASS  FEEDBACK 50 %: the 2nd repeat re the 1st (1 kHz burst) @ 96000: -6.02 dB (-6.02 expected)
+PASS  PING-PONG: repeats alternate left / right (L re R at 180 / 360 ms) @ 96000: 234 / -179 dB
+PASS  SYNC 1/4 without a host tempo (120 BPM): the repeat at 500 ms @ 96000: 500.010 ms
+PASS  ESS DUCK 12 dB: the esses in the effect (re ESS DUCK off) @ 44100: -12.0 dB (limit < -6)
+PASS  ESS DUCK: the vowels in the effect, the most-changed vowel @ 44100: -0.00 dB (all vowels -0.00 dB)
+PASS  ESS DUCK 12 dB: the esses in the effect (re ESS DUCK off) @ 48000: -12.0 dB (limit < -6)
+PASS  ESS DUCK: the vowels in the effect, the most-changed vowel @ 48000: -0.00 dB (all vowels -0.00 dB)
+PASS  ESS DUCK 12 dB: the esses in the effect (re ESS DUCK off) @ 96000: -12.0 dB (limit < -6)
+PASS  ESS DUCK: the vowels in the effect, the most-changed vowel @ 96000: -0.00 dB (all vowels -0.00 dB)
+PASS  VOICE DUCK 12 dB: the reverb while the voice sounds (re off): -11.8 dB
+PASS  VOICE DUCK: the reverb in the pauses (re off) - it blooms back: -0.7 dB
+PASS  all 13 factory presets: finite, peak at most +6 dB over the input's: ok
+PASS  every preset sounds different from Init: ok
+
+ALL PASS: 68 of 68 independent checks passed (10 s)

@@ -1,0 +1,340 @@
+* Loading module...
+
+	~/axell-space/build/AxellSpace_artefacts/Release/VST3/Axell Space.vst3
+
+* Check valid bundle structure...
+
+* Scanning classes...
+
+  Factory Info:
+	vendor = Axell Yobag
+	url = 
+	email = axellpetre@protonmail.com
+
+  Class Info 0:
+	name = Axell Space
+	category = Audio Module Class
+	subCategories = Fx|Reverb|Delay
+	version = 1.0.0
+	sdkVersion = VST 3.8.0
+	cid = ABCDEF019182FAEB4178796253706331
+
+  Class Info 1:
+	name = Axell Space
+	category = Component Controller Class
+	subCategories = Fx|Reverb|Delay
+	version = 1.0.0
+	sdkVersion = VST 3.8.0
+	cid = ABCDEF011234ABCD4178796253706331
+
+* Checking snapshots...
+
+Info: No snapshots in Bundle.
+
+* Creating tests...
+
+* Running tests...
+
+-------------------------------------------------------------
+TestSuite : Axell Space
+-------------------------------------------------------------
+
+-------------------------------------------------------------
+TestSuite : General Tests
+-------------------------------------------------------------
+
+[Scan Editor Classes]
+Info:  ===Scan Editor Classes ====================================
+Info:  This component has an edit controller class
+Info:     Controller CID: {ABCDEF01-1234-ABCD-4178-796253706331}
+[Succeeded]
+
+[Scan Buses]
+Info:  ===Scan Buses ====================================
+Info:  => Audio Buses: [1 In(s) => 1 Out(s)]
+Info:       In [0]: "Input" (Main-Default Active) 
+Info:       Out[0]: "Output" (Main-Default Active) 
+Info:  => Event Buses: [0 In(s) => 0 Out(s)]
+[Succeeded]
+
+[Scan Parameters]
+Info:  ===Scan Parameters ====================================
+Info:  This component exports 31 parameter(s)
+Info:     Parameter 000 (id=1882965841): [title="Reverb"] [unit=""] [type = Toggle, default = 1.000000, unit = 0]
+Info:     Parameter 001 (id=3575610): [title="Reverb Type"] [unit=""] [type = Discrete, default = 0.666667, unit = 0]
+Info:     Parameter 002 (id=3530753): [title="Size"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 003 (id=95459258): [title="Decay"] [unit=""] [type = Float, default = 0.456953, unit = 0]
+Info:     Parameter 004 (id=827409568): [title="Pre-Delay"] [unit=""] [type = Float, default = 0.384689, unit = 0]
+Info:     Parameter 005 (id=1437187330): [title="Damping"] [unit=""] [type = Float, default = 0.400000, unit = 0]
+Info:     Parameter 006 (id=96278371): [title="Early Reflections"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 007 (id=1274578300): [title="Modulation"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 008 (id=1819481297): [title="Reverb Low Cut"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 009 (id=1128801053): [title="Reverb High Cut"] [unit=""] [type = Float, default = 0.752939, unit = 0]
+Info:  =>Parameter 009 (id=1128801053): getParamValueByString ("12.0 kHz") doesn't return the original normalized value! Got 0.000000 instead of 0.752939.
+Info:     Parameter 010 (id=113126854): [title="Width"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 011 (id=1012077778): [title="Reverb Level"] [unit=""] [type = Float, default = 0.800000, unit = 0]
+Info:     Parameter 012 (id=1550347970): [title="Delay"] [unit=""] [type = Toggle, default = 0.000000, unit = 0]
+Info:     Parameter 013 (id=3545755): [title="Delay Sync"] [unit=""] [type = Toggle, default = 1.000000, unit = 0]
+Info:     Parameter 014 (id=3387378): [title="Delay Note"] [unit=""] [type = Discrete, default = 0.625000, unit = 0]
+Info:     Parameter 015 (id=3560141): [title="Delay Time"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 016 (id=1955982213): [title="Feedback"] [unit=""] [type = Float, default = 0.315789, unit = 0]
+Info:     Parameter 017 (id=1719174282): [title="Ping-Pong"] [unit=""] [type = Toggle, default = 0.000000, unit = 0]
+Info:     Parameter 018 (id=1183837855): [title="Delay Low Cut"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 019 (id=751207183): [title="Delay High Cut"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:  =>Parameter 019 (id=751207183): getParamValueByString ("6.0 kHz") doesn't return the original normalized value! Got 0.000000 instead of 0.500000.
+Info:     Parameter 020 (id=95852938): [title="Drive"] [unit=""] [type = Float, default = 0.000000, unit = 0]
+Info:     Parameter 021 (id=482634689): [title="Delay Level"] [unit=""] [type = Float, default = 0.800000, unit = 0]
+Info:     Parameter 022 (id=1079428816): [title="Delay into Reverb"] [unit=""] [type = Float, default = 0.000000, unit = 0]
+Info:     Parameter 023 (id=696773598): [title="Ess Duck"] [unit=""] [type = Toggle, default = 1.000000, unit = 0]
+Info:     Parameter 024 (id=1732015356): [title="Ess Duck Amount"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 025 (id=1127982347): [title="Voice Duck"] [unit=""] [type = Float, default = 0.000000, unit = 0]
+Info:     Parameter 026 (id=884274446): [title="Duck Release"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 027 (id=108124): [title="Mix"] [unit=""] [type = Float, default = 0.200000, unit = 0]
+Info:     Parameter 028 (id=1141971201): [title="Output"] [unit=""] [type = Float, default = 0.666667, unit = 0]
+Info:     Parameter 029 (id=1652125811): [title="Bypass"] [unit=""] [type = Toggle, default = 0.000000, unit = 0]
+Info:     Parameter 030 (id=1886548852): [title="Program"] [unit=""] [type = Discrete, default = 0.000000, unit = 0]
+Info:  =>Parameter 030 (id=1886548852) is kIsProgramChange, but not a kIsList!
+[Succeeded]
+
+[MIDI Mapping]
+Info:  ===MIDI Mapping ====================================
+[Succeeded]
+
+[MIDI Learn]
+Info:  ===MIDI Learn ====================================
+Info:  No MIDI Learn interface supplied!
+[Succeeded]
+
+[Scan Units]
+Info:  ===Scan Units ====================================
+Info:  This component has 1 unit(s).
+Info:     Unit000 (ID = 0): "Root Unit" (parent ID = -1, programlist ID = 1886548852)
+[Succeeded]
+
+[Scan Programs]
+Info:  ===Scan Programs ====================================
+Info:  Programlist 000 (id=1886548852):  "Factory Presets" (13 programs).
+Info:  Programlist 000->Program 000: "Init"
+Info:  Programlist 000->Program 001: "Vocal Plate"
+Info:  Programlist 000->Program 002: "Booth Air"
+Info:  Programlist 000->Program 003: "Small Room"
+Info:  Programlist 000->Program 004: "Dark Plate"
+Info:  Programlist 000->Program 005: "Hall Hook"
+Info:  Programlist 000->Program 006: "Slap Back"
+Info:  Programlist 000->Program 007: "1/4 Throw"
+Info:  Programlist 000->Program 008: "1/8 Ping-Pong"
+Info:  Programlist 000->Program 009: "Dotted 1/8 Space"
+Info:  Programlist 000->Program 010: "Ad-lib Tail"
+Info:  Programlist 000->Program 011: "Send: Vocal Plate (100 % wet)"
+Info:  Programlist 000->Program 012: "Send: 1/4 Delay (100 % wet)"
+[Succeeded]
+
+[Terminate/Initialize]
+Info:  ===Terminate/Initialize ====================================
+[Succeeded]
+
+[Check Unit Structure]
+Info:  ===Check Unit Structure ====================================
+Info:  All units have valid parent IDs.
+[Succeeded]
+
+[Valid State Transition 32bits]
+Info:  ===Valid State Transition 32bits ====================================
+[Succeeded]
+
+[Valid State Transition 64bits]
+Info:  ===Valid State Transition 64bits ====================================
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Bus Consistency]
+Info:  ===Bus Consistency ====================================
+[Succeeded]
+
+[Bus Activation]
+Info:  ===Bus Activation ====================================
+Info:     Bus Activation: Input Audio Bus (0) (kMain)
+Info:     Bus Activation: Output Audio Bus (0) (kMain)
+[Succeeded]
+
+[Check Audio Bus Arrangement]
+Info:  ===Check Audio Bus Arrangement ====================================
+Info:     Check Input Audio Bus Arrangement (0)
+Info:     Check Output Audio Bus Arrangement (0)
+[Succeeded]
+
+[SideChain Arrangement]
+Info:  ===SideChain Arrangement ====================================
+[Succeeded]
+
+[Suspend/Resume]
+Info:  ===Suspend/Resume ====================================
+[Succeeded]
+
+[Note Expression]
+Info:  ===Note Expression ====================================
+Info:  No Note Expression interface supplied!
+[Succeeded]
+
+[Keyswitch]
+Info:  ===Keyswitch ====================================
+Info:  No Keyswitch interface supplied!
+[Succeeded]
+
+[ProcessContext Requirements]
+Info:  ===ProcessContext Requirements ====================================
+Info:  ProcessContextRequirements:
+Info:   - SystemTime
+Info:   - ContinousTimeSamples
+Info:   - ProjectTimeMusic
+Info:   - BarPosititionMusic
+Info:   - CycleMusic
+Info:   - SamplesToNextClock
+Info:   - Tempo
+Info:   - TimeSignature
+Info:   - Chord
+Info:   - FrameRate
+Info:   - TransportState
+[Succeeded]
+
+-------------------------------------------------------------
+TestSuite : Single Precision (32 bit) Tests
+-------------------------------------------------------------
+
+[Process Test]
+[Succeeded]
+
+[Process function running in another thread]
+Info:  ===Process function running in another thread ====================================
+[Succeeded]
+
+[Silence Flags]
+Info:  ===Silence Flags ====================================
+[Succeeded]
+
+[Silence Processing]
+Info:  ===Silence Processing ====================================
+[Succeeded]
+
+[Parameters Flush (no Buffer)]
+Info:  ===Parameters Flush (no Buffer) ====================================
+[Succeeded]
+
+[Parameters Flush 2 (only numChannel==0)]
+Info:  ===Parameters Flush 2 (only numChannel==0) ====================================
+[Succeeded]
+
+[Parameters Flush 2 (no Buffer, no parameter change)]
+Info:  ===Parameters Flush 2 (no Buffer, no parameter change) ====================================
+[Succeeded]
+
+[Variable Block Size]
+Info:  ===Variable Block Size ====================================
+[Succeeded]
+
+[Process Format]
+Info:  ===Process Format ====================================
+Info:  ***Tested Sample Rates***
+Info:        22050 Hz - processed successfully!
+Info:        32000 Hz - processed successfully!
+Info:        44100 Hz - processed successfully!
+Info:        48000 Hz - processed successfully!
+Info:        88200 Hz - processed successfully!
+Info:        96000 Hz - processed successfully!
+Info:       192000 Hz - processed successfully!
+Info:       384000 Hz - processed successfully!
+Info:    1234.5678 Hz - processed successfully!
+Info:    12345.678 Hz - processed successfully!
+Info:    123456.78 Hz - processed successfully!
+Info:    1234567.8 Hz - processed successfully!
+[Succeeded]
+
+[Parameter Bypass persistence]
+Info:  ===Parameter Bypass persistence ====================================
+[Succeeded]
+
+[In: Stereo: 2 Channels, Out: Stereo: 2 Channels]
+Info:  ===In: Stereo: 2 Channels, Out: Stereo: 2 Channels ====================================
+[Succeeded]
+
+[In: Mono: 1 Channels, Out: Mono: 1 Channels]
+Info:  ===In: Mono: 1 Channels, Out: Mono: 1 Channels ====================================
+[Succeeded]
+
+[Accuracy: Block, 1 Parameters, Change every100 Samples]
+Info:  ===Accuracy: Block, 1 Parameters, Change every100 Samples ====================================
+[Succeeded]
+
+[Accuracy: Sample, 1 Parameters, Change every100 Samples]
+Info:  ===Accuracy: Sample, 1 Parameters, Change every100 Samples ====================================
+Info:     Not all points have been read via IParameterChanges
+Info:     Not all points have been read via IParameterChanges
+[Succeeded]
+
+-------------------------------------------------------------
+TestSuite : Double Precision (64 bit) Tests
+-------------------------------------------------------------
+
+[Process Test]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Process function running in another thread]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Silence Flags]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Silence Processing]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Parameters Flush (no Buffer)]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Parameters Flush 2 (only numChannel==0)]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Parameters Flush 2 (no Buffer, no parameter change)]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Variable Block Size]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Process Format]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Parameter Bypass persistence]
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[In: Stereo: 2 Channels, Out: Stereo: 2 Channels]
+Info:  ===In: Stereo: 2 Channels, Out: Stereo: 2 Channels ====================================
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[In: Mono: 1 Channels, Out: Mono: 1 Channels]
+Info:  ===In: Mono: 1 Channels, Out: Mono: 1 Channels ====================================
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Accuracy: Block, 1 Parameters, Change every100 Samples]
+Info:  ===Accuracy: Block, 1 Parameters, Change every100 Samples ====================================
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+[Accuracy: Sample, 1 Parameters, Change every100 Samples]
+Info:  ===Accuracy: Sample, 1 Parameters, Change every100 Samples ====================================
+Info:  64bit Audio Processing not supported.
+[Succeeded]
+
+-------------------------------------------------------------
+Result: 47 tests passed, 0 tests failed
+-------------------------------------------------------------
