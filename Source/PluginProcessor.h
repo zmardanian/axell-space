@@ -47,6 +47,9 @@ public:
     int getActiveSlot() const { return activeSlot; }
     void selectSlot (int slot);
     void copyActiveToOther();
+    // the name of the preset the settings came from (a factory preset, or a name a project or the Dojo gave them)
+    juce::String getPresetName() const;
+    void setPresetName (const juce::String& n);
     const axs::Engine& engine() const { return dsp; }
     double hostBpm() const { return bpm.load(); }
 
@@ -57,6 +60,7 @@ public:
 private:
     void run (juce::AudioBuffer<float>& buffer, bool bypass);
     void restoreTree (const juce::ValueTree& tree);
+    juce::ValueTree stateWithName();
 
     axs::Engine dsp;
     int preparedChannels = 0, maxChunk = 512;
@@ -65,6 +69,8 @@ private:
     int currentProgram = 0, activeSlot = 0;
     juce::ValueTree slots[2];
     std::atomic<double> bpm { 120.0 };
+    juce::CriticalSection nameLock;
+    juce::String presetName { "Init" };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SpaceProcessor)
 };

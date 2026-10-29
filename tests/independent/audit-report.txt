@@ -66,5 +66,6 @@ PASS  VOICE DUCK 12 dB: the reverb while the voice sounds (re off): -11.8 dB
 PASS  VOICE DUCK: the reverb in the pauses (re off) - it blooms back: -0.7 dB
 PASS  all 13 factory presets: finite, peak at most +6 dB over the input's: ok
 PASS  every preset sounds different from Init: ok
+PASS  every factory preset renders bit-identically to the previous release (AxellSpace-1.0.0-linux-x86_64): max difference 0
 
-ALL PASS: 68 of 68 independent checks passed (10 s)
+ALL PASS: 69 of 69 independent checks passed (16 s)

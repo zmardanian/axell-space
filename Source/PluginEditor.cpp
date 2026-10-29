@@ -369,7 +369,7 @@ void SpaceEditor::timerCallback()
               proc.essNow.load(), proc.duckNow.load());
     inMeter.push (proc.inPeak[0].load(), proc.inPeak[1].load(), 2);
     outMeter.push (proc.outPeak[0].load(), proc.outPeak[1].load(), 2);
-    presetName.setButtonText (proc.getProgramName (proc.getCurrentProgram()));
+    presetName.setButtonText (proc.getPresetName());
     slotA.setToggleState (proc.getActiveSlot() == 0, juce::dontSendNotification);
     slotB.setToggleState (proc.getActiveSlot() == 1, juce::dontSendNotification);
     slotCopy.setButtonText (proc.getActiveSlot() == 0 ? "COPY A>B" : "COPY B>A");

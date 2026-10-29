@@ -113,10 +113,10 @@ PASS  every preset: NaN / Inf in -> finite output (non-finite samples) @ 96.0 kH
 PASS  every preset: blocks of 512 vs random 1-2048 (max difference) @ 96.0 kHz                                      0.0000   [0 .. 1e-06]
 PASS  TYPE switched while ringing: largest sample step re the input's @ 96.0 kHz                                    0.9938 x  [0 .. 1.6]
 PASS  no memory allocation in process() (every preset, random blocks)                                               0.0000 allocs  [0 .. 0]
-PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Vocal Plate (% of one core)                                          2.7400 %  [0 .. 6]
-PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Hall Hook (% of one core)                                            2.9829 %  [0 .. 6]
-PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Ad-lib Tail (% of one core)                                          3.3992 %  [0 .. 6]
-ALL PASS: 118 of 118 checks passed (24.0 s)
+PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Vocal Plate (% of one core)                                          2.7146 %  [0 .. 6]
+PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Hall Hook (% of one core)                                            2.9647 %  [0 .. 6]
+PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Ad-lib Tail (% of one core)                                          3.3685 %  [0 .. 6]
+ALL PASS: 118 of 118 checks passed (23.9 s)
 PASS  parameter count = 29
 PASS  every parameter in its frozen place, version hint 1
 PASS  defaults = the engine's defaults (= the Init preset)
@@ -124,6 +124,10 @@ PASS  no latency; tail length covers the longest reverb
 PASS  every factory preset applies its exact settings (13)
 PASS  state restore: every parameter identical
 PASS  A/B: each slot keeps its own settings
+PASS  state restore: the preset name comes back (1/4 Throw)
+PASS  a name given by the Dojo is shown and saved again
+PASS  a 1.0.0 state (no preset name) loads every parameter
+PASS  A/B: each slot keeps its preset name
 PASS  MIX turned to 0 %: after its glide, the output is the input, sample for sample @ 44.1 kHz
 PASS  MIX 30 %: the effect is heard, every sample finite @ 44.1 kHz
 PASS  host bypass: after the 10 ms crossfade, exactly the input @ 44.1 kHz
@@ -142,4 +146,4 @@ PASS  without a host transport the tempo is 120 BPM
 PASS  editor: opens / closes 5x while processing (100 % size)
 PASS  editor: resizable 75-200 %
 PASS  editor: re-opens at the last used size (150 %)
-ALL PASS: 25 of 25 plugin checks passed
+ALL PASS: 29 of 29 plugin checks passed

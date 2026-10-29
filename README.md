@@ -83,16 +83,16 @@ changed (0.00 dB). On the artist's own dry vocal: 85 % of the ess moments turned
 **CPU**: 2.7-3.3 % of one core (stereo, 48 kHz, 128-sample blocks, Vocal Plate / Hall Hook / Ad-lib Tail presets).
 No memory allocation while processing.
 
-**Verified for 1.0.0**: DSP suite 118 checks, plugin suite 25, ASan + UBSan clean, independent audit 68/68,
+**Verified for 1.0.1**: DSP suite 118 checks, plugin suite 29, ASan + UBSan clean, independent audit 69/69,
 pluginval strictness 10, Steinberg's VST3 validator 47/47.
 
 ## Install (Linux)
 
-Download `AxellSpace-1.0.0-linux-x86_64.tar.gz` from the
+Download `AxellSpace-1.0.1-linux-x86_64.tar.gz` from the
 [latest release](https://github.com/zmardanian/axell-space/releases/latest) (optional: `sha256sum -c SHA256SUMS.txt`), then:
 
-    tar xzf AxellSpace-1.0.0-linux-x86_64.tar.gz
-    cd AxellSpace-1.0.0-linux-x86_64
+    tar xzf AxellSpace-1.0.1-linux-x86_64.tar.gz
+    cd AxellSpace-1.0.1-linux-x86_64
     ./install.sh
 
 Then in REAPER: Options > Preferences > Plug-ins > VST > Re-scan. On a vocal track use MIX 15-30 %; on a send / aux

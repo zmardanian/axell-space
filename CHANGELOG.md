@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.1 - 2026-10-29
+- **The preset name is saved with the project** (and per A/B slot): a session or an Axell Signature Dojo chain reopens
+  showing its preset instead of "Init". Audio bit-identical to 1.0.0 (every factory preset, checked by the
+  independent audit); projects saved with 1.0.0 load unchanged.
+- Verified: DSP suite 118 checks, plugin suite 29, ASan + UBSan clean, independent audit 69/69, pluginval
+  strictness 10, Steinberg's VST3 validator 47/47.
+
 ## 1.0.0 - 2026-10-29
 - **First release**: a reverb (BOOTH / ROOM / PLATE / HALL: a 16-line feedback delay network with Hadamard mixing,
   per-line damping, slow modulation of every line, input diffusion and image-source early reflections) and a

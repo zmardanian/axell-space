@@ -5,6 +5,7 @@ using APVTS = juce::AudioProcessorValueTreeState;
 
 namespace
 {
+const juce::Identifier kPresetNameId ("presetName");
 juce::AudioParameterFloatAttributes fmt (std::function<juce::String (float)> toText)
 {
     return juce::AudioParameterFloatAttributes()
@@ -227,6 +228,7 @@ void SpaceProcessor::setCurrentProgram (int index)
     index = juce::jlimit (0, getNumPrograms() - 1, index);
     currentProgram = index;
     writeParams (axs::factoryPresets()[(size_t) index].p);
+    setPresetName (axs::factoryPresets()[(size_t) index].name);
 }
 
 const juce::String SpaceProcessor::getProgramName (int index)
@@ -239,15 +241,37 @@ void SpaceProcessor::selectSlot (int slot)
     slot = juce::jlimit (0, 1, slot);
     if (slot == activeSlot)
         return;
-    slots[activeSlot] = apvts.copyState();
+    slots[activeSlot] = stateWithName();
     if (slots[slot].isValid())
+    {
         restoreTree (slots[slot].createCopy());
+        setPresetName (slots[slot].getProperty (kPresetNameId, getPresetName()).toString());
+    }
     else
-        slots[slot] = apvts.copyState();
+        slots[slot] = stateWithName();
     activeSlot = slot;
 }
 
-void SpaceProcessor::copyActiveToOther() { slots[1 - activeSlot] = apvts.copyState(); }
+void SpaceProcessor::copyActiveToOther() { slots[1 - activeSlot] = stateWithName(); }
+
+juce::String SpaceProcessor::getPresetName() const
+{
+    const juce::ScopedLock sl (nameLock);
+    return presetName;
+}
+
+void SpaceProcessor::setPresetName (const juce::String& n)
+{
+    const juce::ScopedLock sl (nameLock);
+    presetName = n;
+}
+
+juce::ValueTree SpaceProcessor::stateWithName()
+{
+    auto state = apvts.copyState();
+    state.setProperty (kPresetNameId, getPresetName(), nullptr);
+    return state;
+}
 
 // APVTS::replaceState skips a parameter whose snapped value already matches; re-apply explicitly (pluginval scenario)
 void SpaceProcessor::restoreTree (const juce::ValueTree& tree)
@@ -268,7 +292,8 @@ void SpaceProcessor::restoreTree (const juce::ValueTree& tree)
 
 void SpaceProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    auto state = apvts.copyState();
+    // the parameters and (1.0.1) the preset's name, so a project or a Dojo chain reopens showing its preset
+    auto state = stateWithName();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     copyXmlToBinary (*xml, destData);
 }
@@ -277,7 +302,12 @@ void SpaceProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
     std::unique_ptr<juce::XmlElement> xml (getXmlFromBinary (data, sizeInBytes));
     if (xml != nullptr && xml->hasTagName (apvts.state.getType()))
-        restoreTree (juce::ValueTree::fromXml (*xml));
+    {
+        auto tree = juce::ValueTree::fromXml (*xml);
+        setPresetName (tree.getProperty (kPresetNameId, getPresetName()).toString());
+        tree.removeProperty (kPresetNameId, nullptr);
+        restoreTree (tree);
+    }
 }
 
 juce::AudioProcessorEditor* SpaceProcessor::createEditor() { return new SpaceEditor (*this); }

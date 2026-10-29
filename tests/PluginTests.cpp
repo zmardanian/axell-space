@@ -144,6 +144,39 @@ int main()
         check (std::abs (s0 - 0.8f) < 0.011f && std::abs (getParam (c, "decay") - 4.0f) < 0.011f, "A/B: each slot keeps its own settings");
     }
 
+    //== 3b. the preset name (1.0.1): saved with the state, per A/B slot; a 1.0.0 state (no name) still loads
+    {
+        SpaceProcessor a;
+        a.setCurrentProgram (7);
+        const auto name = a.getProgramName (7);
+        juce::MemoryBlock mb;
+        a.getStateInformation (mb);
+        SpaceProcessor b;
+        b.setStateInformation (mb.getData(), (int) mb.getSize());
+        check (b.getPresetName() == name && sameParams (a.readParams(), b.readParams()), "state restore: the preset name comes back (" + name + ")");
+        auto xml = juce::AudioProcessor::getXmlFromBinary (mb.getData(), (int) mb.getSize());
+        xml->setAttribute ("presetName", "Grit \"bearer\" Space");
+        juce::MemoryBlock renamed;
+        juce::AudioProcessor::copyXmlToBinary (*xml, renamed);
+        SpaceProcessor c;
+        c.setStateInformation (renamed.getData(), (int) renamed.getSize());
+        check (c.getPresetName() == "Grit \"bearer\" Space", "a name given by the Dojo is shown and saved again");
+        xml->removeAttribute ("presetName");
+        juce::MemoryBlock old;
+        juce::AudioProcessor::copyXmlToBinary (*xml, old);
+        SpaceProcessor d;
+        d.setStateInformation (old.getData(), (int) old.getSize());
+        check (sameParams (a.readParams(), d.readParams()), "a 1.0.0 state (no preset name) loads every parameter");
+        SpaceProcessor e;
+        e.setCurrentProgram (1);
+        e.selectSlot (1);
+        e.setCurrentProgram (5);
+        e.selectSlot (0);
+        const auto n0 = e.getPresetName();
+        e.selectSlot (1);
+        check (n0 == e.getProgramName (1) && e.getPresetName() == e.getProgramName (5), "A/B: each slot keeps its preset name");
+    }
+
     //== 4. audio through the plugin at every rate: dry exact at MIX 0, host bypass exact, wet present, finite
     for (double fs : { 44100.0, 48000.0, 96000.0, 192000.0 })
     {

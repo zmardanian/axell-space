@@ -228,6 +228,18 @@ report(f"all {len(names)} factory presets: finite, peak at most +6 dB over the i
 diff = [nm for r, nm in zip(runs[1:], names[1:]) if np.abs(out[r.name] - out["p0"]).max() < 1e-4]
 report("every preset sounds different from Init", not diff, ", ".join(diff) if diff else "ok")
 
+# ---------------------------------------------------------------- 6. the previous release renders the same (if it is here)
+prev = os.environ.get("AXELL_PREV_VST3", os.path.expanduser("~/axell-space-release/AxellSpace-1.0.0-linux-x86_64/Axell Space.vst3"))
+if os.path.isdir(prev) and os.path.realpath(prev) != os.path.realpath(os.environ["AXELL_VST3"]):
+    runs_new = [Run(f"n{i}", fs, sets={"Program": nm}) for i, nm in enumerate(names)]
+    runs_old = [Run(f"o{i}", fs, sets={"Program": nm}) for i, nm in enumerate(names)]
+    a = run_all(runs_new, {r.name: x for r in runs_new}, jobname="new")
+    b = run_all(runs_old, {r.name: x for r in runs_old}, jobname="old", plugin=prev)
+    e = max(np.abs(a[f"n{i}"] - b[f"o{i}"]).max() for i in range(len(names)))
+    report(f"every factory preset renders bit-identically to the previous release ({os.path.basename(os.path.dirname(prev))})", e == 0.0, f"max difference {e:.3g}")
+else:
+    print("skip  previous release not found")
+
 fails = sum(1 for _, ok, _ in results if not ok)
 print(f"\n{'ALL PASS' if fails == 0 else 'FAILURES'}: {len(results) - fails} of {len(results)} independent checks passed ({time.time() - START:.0f} s)")
 sys.exit(fails)
