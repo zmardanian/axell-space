@@ -66,6 +66,9 @@ private:
     // 2.0
     ui::Toggle freeze { "FREEZE", ui::col::teal, "pill" }, preSync { "PRE SYNC", ui::col::teal, "pill" };
     ui::Choice preNote, engine;
+    // 4.0
+    ui::Choice space, shape;
+    ui::Knob shapeTime { "TIME", ui::col::teal };
     // DELAY
     ui::Toggle delayOn { "DELAY", ui::col::accent, "power" };
     ui::Toggle sync { "SYNC", ui::col::accent, "pill" }, pingPong { "PING-PONG", ui::col::accent, "pill" };

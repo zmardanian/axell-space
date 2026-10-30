@@ -67,6 +67,25 @@ PASS  UNMASK 100 %: the wet keeps the band the voice leaves free (5 kHz) @ 48.0 
 PASS  UNMASK on a gated voice: artefacts above 5 kHz re the wet tone (floor without UNMASK: -114 dB) @ 48.0 kHz   -106.0077 dB  [-400 .. -90]
 PASS  UNMASK 0 %: the output is the 2.0 output, bit for bit @ 48.0 kHz                                              0.0000   [0 .. 0]
 PASS  UNMASK 30 % acts (sanity) @ 48.0 kHz                                                                          0.1365   [0.0001 .. 10]
+PASS  Vocal Booth: decay at 1 kHz re the room's physics (Eyring) @ 48.0 kHz                                         1.1106 x  [0.85 .. 1.15]
+PASS  Vocal Booth: decay at 250 Hz re the room's physics @ 48.0 kHz                                                 1.2433 x  [0.6 .. 1.4]
+PASS  Vocal Booth: decay at 4 kHz re the room's physics @ 48.0 kHz                                                  1.3329 x  [0.6 .. 1.4]
+PASS  Vocal Booth: first reflection on time (re the geometry) @ 48.0 kHz                                            0.0005 ms  [-0.1 .. 0.1]
+PASS  Vocal Booth: a centred voice's room is balanced (L re R) @ 48.0 kHz                                           0.8968 dB  [-1 .. 1]
+PASS  Studio Live Room: decay at 1 kHz re the room's physics (Eyring) @ 48.0 kHz                                    0.9800 x  [0.85 .. 1.15]
+PASS  Studio Live Room: decay at 250 Hz re the room's physics @ 48.0 kHz                                            0.8272 x  [0.6 .. 1.4]
+PASS  Studio Live Room: decay at 4 kHz re the room's physics @ 48.0 kHz                                             1.0554 x  [0.6 .. 1.4]
+PASS  Studio Live Room: first reflection on time (re the geometry) @ 48.0 kHz                                      -0.0044 ms  [-0.1 .. 0.1]
+PASS  Studio Live Room: a centred voice's room is balanced (L re R) @ 48.0 kHz                                     -0.0249 dB  [-1 .. 1]
+PASS  Wood Chapel: decay at 1 kHz re the room's physics (Eyring) @ 48.0 kHz                                         0.9851 x  [0.85 .. 1.15]
+PASS  Wood Chapel: decay at 250 Hz re the room's physics @ 48.0 kHz                                                 0.8612 x  [0.6 .. 1.4]
+PASS  Wood Chapel: decay at 4 kHz re the room's physics @ 48.0 kHz                                                  1.0207 x  [0.6 .. 1.4]
+PASS  Wood Chapel: first reflection on time (re the geometry) @ 48.0 kHz                                           -0.0032 ms  [-0.1 .. 0.1]
+PASS  Wood Chapel: a centred voice's room is balanced (L re R) @ 48.0 kHz                                           0.0006 dB  [-1 .. 1]
+PASS  GATED 300 ms: the tail holds after the voice (0.12 - 0.22 s after it, re during) @ 48.0 kHz                  -3.1729 dB  [-12 .. 1]
+PASS  GATED 300 ms: then it is gone (0.45 s after the voice, re during) @ 48.0 kHz                                -88.3934 dB  [-400 .. -40]
+PASS  REVERSE 400 ms: the tail comes back as a swell (later part re earlier part) @ 48.0 kHz                       12.6493 dB  [3 .. 60]
+PASS  REVERSE: the level of a steady tail as NATURAL's @ 48.0 kHz                                                  -1.2724 dB  [-1.5 .. 1.5]
 PASS  ESS DUCK 12 dB (decision forced on the esses): the esses reaching the effects (re off) @ 48.0 kHz            -9.9339 dB  [-14 .. -6]
 PASS  ESS DUCK: the vowels reaching the effects (re ESS DUCK off) @ 48.0 kHz                                       -0.0000 dB  [-0.5 .. 0]
 PASS  VOICE DUCK 12 dB: the reverb while the voice is loud (re no ducking) @ 48.0 kHz                             -11.9999 dB  [-14 .. -6]
@@ -78,17 +97,17 @@ PASS  every preset: NaN / Inf in -> finite output (non-finite samples) @ 48.0 kH
 PASS  every preset: blocks of 512 vs random 1-2048 (max difference) @ 48.0 kHz                                      0.0000   [0 .. 1e-06]
 PASS  TYPE switched while ringing: largest sample step re the input's @ 48.0 kHz                                    1.0039 x  [0 .. 1.6]
 PASS  no memory allocation in process() (every preset, random blocks)                                               0.0000 allocs  [0 .. 0]
-ALL PASS: 80 of 80 checks passed (62.5 s)
+ALL PASS: 99 of 99 checks passed (103.1 s)
 PASS  a pre-2.0 session (no engine in its state) keeps the 1.0 reverb
 PASS  a 2.0 session keeps the 2.0 reverb
-PASS  a 2.0 session (no 3.0 parameters) keeps the 2.0 sound: CLEAN delay, DIFFUSE 0, UNMASK 0
+PASS  a 2.0 session (no 3.0 / 4.0 parameters) keeps the 2.0 sound: CLEAN delay, DIFFUSE 0, UNMASK 0, no real space
 PASS  a factory preset selects the 2.0 reverb
-PASS  parameter count = 38
-PASS  every parameter in its frozen place, version hint 1 (1.0) / 2 (2.0) / 3 (3.0)
+PASS  parameter count = 41
+PASS  every parameter in its frozen place, version hint 1 (1.0) / 2 (2.0) / 3 (3.0) / 4 (4.0)
 PASS  a new instance uses the 2.0 reverb core
 PASS  defaults = the engine's defaults (= the Init preset)
 PASS  no latency; tail length covers the longest reverb
-PASS  every factory preset applies its exact settings (17)
+PASS  every factory preset applies its exact settings (26)
 PASS  state restore: every parameter identical
 PASS  A/B: each slot keeps its own settings
 PASS  state restore: the preset name comes back (1/4 Throw)

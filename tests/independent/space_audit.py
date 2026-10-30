@@ -220,7 +220,9 @@ report("VOICE DUCK: the reverb in the pauses (re off) - it blooms back", gaps > 
 # ---------------------------------------------------------------- 5. every factory preset: finite, bounded
 names = ["Init", "Vocal Plate", "Booth Air", "Small Room", "Dark Plate", "Hall Hook", "Slap Back", "1/4 Throw", "1/8 Ping-Pong",
          "Dotted 1/8 Space", "Ad-lib Tail", "Send: Vocal Plate (100 % wet)", "Send: 1/4 Delay (100 % wet)",
-         "Tape Echo", "Analog Dub", "Diffuse Trail", "Unmasked Hall"]
+         "Tape Echo", "Analog Dub", "Diffuse Trail", "Unmasked Hall",
+         "Real: Vocal Booth", "Real: Tiled Bathroom", "Real: Studio Live Room", "Real: Concrete Stairwell", "Real: Small Club",
+         "Real: Wood Chapel", "Real: Car Park", "Gated Hall", "Reverse Swell"]
 x, _, _ = voice(fs, 6.0)
 runs = [Run(f"p{i}", fs, sets={"Program": nm}) for i, nm in enumerate(names)]
 out = run_all(runs, {r.name: x for r in runs}, jobname="presets")
@@ -232,9 +234,20 @@ report("every preset sounds different from Init", not diff, ", ".join(diff) if d
 # ---------------------------------------------------------------- 6. the previous releases render the same (if they are here)
 # a session saved before 3.0 has none of 3.0's parameters: it loads them at their defaults (CLEAN, DIFFUSE 0, UNMASK 0);
 # the 3.0 factory presets may use them, so the comparison sets them to those defaults explicitly
-NEUTRAL3 = {"Delay Mode": "Clean", "Wow & Flutter": "40", "Delay Diffuse": "0", "Unmask": "0"}
-OLD_NAMES = names[:13]   # the presets 1.0 / 2.0 shipped (3.0 appends its own after them)
+NEUTRAL4 = {"Real Space": "Real space: off", "Reverb Shape": "Natural", "Shape Time": "300"}
+NEUTRAL3 = {"Delay Mode": "Clean", "Wow & Flutter": "40", "Delay Diffuse": "0", "Unmask": "0", **NEUTRAL4}
+OLD_NAMES = names[:13]   # the presets 1.0 / 2.0 shipped (3.0 and 4.0 append their own after them)
 REL = os.path.expanduser("~/axell-space-release")
+# a 3.0 session: its 17 presets with 4.0's parameters at their defaults, bit for bit as 3.0.0
+prev3 = os.environ.get("AXELL_PREV3_VST3", os.path.join(REL, "AxellSpace-3.0.0-linux-x86_64/Axell Space.vst3"))
+if os.path.isdir(prev3) and os.path.realpath(prev3) != os.path.realpath(os.environ["AXELL_VST3"]):
+    n3 = names[:17]
+    a = run_all([Run(f"n{i}", fs, sets={"Program": nm, **NEUTRAL4}) for i, nm in enumerate(n3)], {f"n{i}": x for i in range(len(n3))}, jobname="new3")
+    b = run_all([Run(f"o{i}", fs, sets={"Program": nm}) for i, nm in enumerate(n3)], {f"o{i}": x for i in range(len(n3))}, jobname="old3", plugin=prev3)
+    e = max(np.abs(a[f"n{i}"] - b[f"o{i}"]).max() for i in range(len(n3)))
+    report(f"a 3.0 session: every one of its {len(n3)} factory presets renders bit-identically to {os.path.basename(os.path.dirname(prev3))}", e == 0.0, f"max difference {e:.3g}")
+else:
+    print("skip  previous release for a 3.0 session not found")
 for prev, extra, what in ((os.environ.get("AXELL_PREV_VST3", os.path.join(REL, "AxellSpace-2.0.0-linux-x86_64/Axell Space.vst3")), {}, "a 2.0 session"),
                           (os.environ.get("AXELL_PREV1_VST3", os.path.join(REL, "AxellSpace-1.0.1-linux-x86_64/Axell Space.vst3")),
                            {"Reverb Engine": "1.0 (classic)"}, "a 1.0 session (the 1.0 core)")):
@@ -307,6 +320,32 @@ def band(y, lo, hi):
 d700 = band(out["u100"], 600, 800) - band(out["u0"], 600, 800); dfree = band(out["u100"], 4000, 8000) - band(out["u0"], 4000, 8000)
 report("UNMASK 100 %: the tail steps back where the voice holds (600 - 800 Hz)", d700 < -6.0, f"{d700:+.2f} dB")
 report("UNMASK 100 %: the tail stays where the voice leaves room (4 - 8 kHz)", abs(dfree) < 1.0, f"{dfree:+.2f} dB")
+
+# ---------------------------------------------------------------- 9. 4.0: REAL SPACES and SHAPE
+# each room's decay per band from its physics (Eyring's formula from the room's size and wall materials, with air
+# absorption - computed in the research from the geometry, not from the plugin): low (125 - 250 Hz), mid, high (4 - 8 kHz)
+EYRING = {"Vocal Booth": [0.181, 0.086, 0.075], "Tiled Bathroom": [2.649, 0.902, 0.507], "Living Room": [0.475, 0.311, 0.219], "Studio Live Room": [0.706, 1.23, 1.32], "Concrete Stairwell": [4.489, 3.068, 1.076], "Small Club": [3.401, 0.903, 0.577], "Wood Chapel": [1.354, 2.194, 1.928], "Car Park": [3.788, 2.916, 1.449]}
+fs = 48000
+x = impulse(fs, 9.0)
+runs = [Run(f"r{i}", fs, sets={**WET, "Real Space": nm, "Delay": "Off"}) for i, nm in enumerate(EYRING)]
+out = run_all(runs, {r.name: x for r in runs}, jobname="real")
+for i, (nm, (lo, mid, hi)) in enumerate(EYRING.items()):
+    y = out[f"r{i}"][:, 0] + out[f"r{i}"][:, 1]; y = y[onset(y):]
+    tm = t30(y, fs, 1000)
+    report(f"REAL {nm}: decay at 1 kHz (T30) re its physics ({mid:.2f} s)", 0.85 < tm / mid < 1.15, f"{tm:.3f} s ({100 * (tm / mid - 1):+.0f} %)")
+# GATED 300 ms: open after a burst, closed 0.45 s after it; REVERSE: an impulse comes back rising
+rng = np.random.default_rng(5); n = int(2.0 * fs); v = np.zeros(n); v[:int(0.5 * fs)] = 0.2 * rng.standard_normal(int(0.5 * fs)); xg = np.stack([v, v], 1)
+runs = [Run("g", fs, sets={**WET, "Reverb Type": "Hall", "Decay": "3", "Delay": "Off", "Reverb Shape": "Gated", "Shape Time": "300"}),
+        Run("rv", fs, sets={**WET, "Reverb Type": "Hall", "Decay": "2", "Delay": "Off", "Reverb Shape": "Reverse", "Shape Time": "400"})]
+out = run_all(runs, {"g": xg, "rv": impulse(fs, 2.0)}, jobname="shape")
+lv = lambda y, a, b: 10 * np.log10(np.mean(y[int(a * fs):int(b * fs)] ** 2) + 1e-30)
+g = out["g"][:, 0]; d_ = lv(g, 0.35, 0.5)
+report("GATED 300 ms: open 0.12 - 0.22 s after the voice, closed 0.45 s after it (re during)", lv(g, 0.62, 0.72) - d_ > -12 and lv(g, 0.95, 1.2) - d_ < -40,
+       f"{lv(g, 0.62, 0.72) - d_:+.1f} / {lv(g, 0.95, 1.2) - d_:+.1f} dB")
+# a natural tail is loudest at once; a reversed one swells: its 50 ms envelope peaks long after the onset
+r_ = out["rv"][:, 0]; o_ = onset(r_); k_ = int(0.05 * fs)
+env_ = np.convolve(r_[o_:o_ + int(1.2 * fs)] ** 2, np.ones(k_) / k_, "valid"); tpk = 1000.0 * np.argmax(env_) / fs
+report("REVERSE 400 ms: an impulse's tail comes back as a swell (its loudest moment after the onset)", tpk > 150.0, f"{tpk:.0f} ms")
 
 fails = sum(1 for _, ok, _ in results if not ok)
 print(f"\n{'ALL PASS' if fails == 0 else 'FAILURES'}: {len(results) - fails} of {len(results)} independent checks passed ({time.time() - START:.0f} s)")

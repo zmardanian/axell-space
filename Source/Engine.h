@@ -72,6 +72,10 @@ struct Params
     float wowFlutter = 40.0f;    // % : TAPE / ANALOG pitch movement of the repeats
     float diffuse = 0.0f;        // % : each repeat smears a little more (allpasses in the loop)
     float unmask = 0.0f;         // % : the effects step back in the bands the voice is using, bloom in the gaps
+    // 4.0
+    int space = 0;               // 0: the TYPE's algorithm; 1 .. 8: a modelled real room (real::kRoomList)
+    int shape = 0;               // 0 NATURAL, 1 GATED, 2 REVERSE
+    float shapeMs = 300.0f;      // GATED: how long the tail holds after the voice; REVERSE: the length of a reversed segment
     // DELAY
     bool delayOn = false;
     bool sync = true;
@@ -820,9 +824,11 @@ public:
         fs = sampleRate;
         for (int b = 0; b < B; ++b)
         {
-            for (auto& f : detV[(size_t) b]) f.setBand (fs, freq (b), kDetQ);
-            for (auto& f : detW[(size_t) b]) f.setBand (fs, freq (b), kDetQ);
+            Biquad f;
+            f.setBand (fs, freq (b), kDetQ);
+            db0[(size_t) b] = f.b0; db1[(size_t) b] = f.b1; db2[(size_t) b] = f.b2; da1[(size_t) b] = f.a1; da2[(size_t) b] = f.a2;
             gw[(size_t) b] = std::tan (kPi * std::min (freq (b), 0.45 * fs) / fs);
+            gwf[(size_t) b] = (float) gw[(size_t) b];
         }
         // the bells' interaction: M[i][j] = bell j's response (dB) at band i's centre, per dB of its own gain (at -6 dB)
         double M[B][B], I[B][B];
@@ -858,8 +864,6 @@ public:
     {
         for (int b = 0; b < B; ++b)
         {
-            for (auto& f : detV[(size_t) b]) f.reset();
-            for (auto& f : detW[(size_t) b]) f.reset();
             envV[(size_t) b] = envW[(size_t) b] = 0.0f;
             peak[(size_t) b] = -100.0f;
             tgt[(size_t) b] = 0.0f;
@@ -868,6 +872,8 @@ public:
             ramp[(size_t) b] = 0;
             for (auto& st : ic[(size_t) b]) st = {};
         }
+        for (auto* z : { &vz1, &vz2, &wz1, &wz2 })
+            for (auto& st : *z) st = {};
         count = 0;
         moving = false;
     }
@@ -877,12 +883,17 @@ public:
     void process (float voice, float& wL, float& wR) noexcept
     {
         const float wm = 0.5f * (wL + wR);
+        // the detectors: two band-pass sections per band, voice and wet - band by band independent, laid out as arrays
+        // (the compiler runs several bands per instruction; each band's arithmetic exactly as a Biquad's)
+        std::array<float, B> v1, w1, v2, w2;
+        section (vz1[0], vz2[0], voice, v1);
+        section (wz1[0], wz2[0], wm, w1);
+        section2 (vz1[1], vz2[1], v1, v2);
+        section2 (wz1[1], wz2[1], w1, w2);
         for (int b = 0; b < B; ++b)
         {
-            const float v = detV[(size_t) b][1].process (detV[(size_t) b][0].process (voice));
-            const float w = detW[(size_t) b][1].process (detW[(size_t) b][0].process (wm));
-            envV[(size_t) b] += (v * v - envV[(size_t) b]) * envK;
-            envW[(size_t) b] += (w * w - envW[(size_t) b]) * envK;
+            envV[(size_t) b] += (v2[(size_t) b] * v2[(size_t) b] - envV[(size_t) b]) * envK;
+            envW[(size_t) b] += (w2[(size_t) b] * w2[(size_t) b] - envW[(size_t) b]) * envK;
         }
         if (++count >= 32)
         {
@@ -902,15 +913,49 @@ public:
             // the 32-sample ramps rounded by a 0.7 ms one-pole (no corners: no sidebands at multiples of fs / 32)
             As[(size_t) b] += (A[(size_t) b] - As[(size_t) b]) * smK;
             if (std::abs (As[(size_t) b] - A[(size_t) b]) < 1.0e-7f) As[(size_t) b] = A[(size_t) b];
-            const float a = As[(size_t) b], g = (float) gw[(size_t) b], k = 1.0f / ((float) kQ * a);
-            const float a1 = 1.0f / (1.0f + g * (g + k)), a2 = g * a1, a3 = g * a2, m1 = k * (a * a - 1.0f);
-            wL = bell (ic[(size_t) b][0], wL, a1, a2, a3, m1);
-            wR = bell (ic[(size_t) b][1], wR, a1, a2, a3, m1);
+        }
+        // every band's coefficients in one pass (independent: the compiler runs several bands per instruction)
+        std::array<float, B> c1, c2, c3, cm;
+        for (int b = 0; b < B; ++b)
+        {
+            const float a = As[(size_t) b], g = gwf[(size_t) b], k = 1.0f / ((float) kQ * a);
+            c1[(size_t) b] = 1.0f / (1.0f + g * (g + k));
+            c2[(size_t) b] = g * c1[(size_t) b];
+            c3[(size_t) b] = g * c2[(size_t) b];
+            cm[(size_t) b] = k * (a * a - 1.0f);
+        }
+        // the cascade itself, band after band
+        for (int b = 0; b < B; ++b)
+        {
+            wL = bell (ic[(size_t) b][0], wL, c1[(size_t) b], c2[(size_t) b], c3[(size_t) b], cm[(size_t) b]);
+            wR = bell (ic[(size_t) b][1], wR, c1[(size_t) b], c2[(size_t) b], c3[(size_t) b], cm[(size_t) b]);
         }
     }
     float bandGainDb (int b) const noexcept { return 40.0f * std::log10 (As[(size_t) b]); }
 
 private:
+    // one band-pass section for every band: y = b0 x + z1; z1 = b1 x - a1 y + z2; z2 = b2 x - a2 y (as Biquad::process)
+    void section (std::array<float, B>& z1, std::array<float, B>& z2, float x, std::array<float, B>& y) const noexcept
+    {
+        for (int b = 0; b < B; ++b)
+        {
+            const float o = db0[(size_t) b] * x + z1[(size_t) b];
+            z1[(size_t) b] = db1[(size_t) b] * x - da1[(size_t) b] * o + z2[(size_t) b];
+            z2[(size_t) b] = db2[(size_t) b] * x - da2[(size_t) b] * o;
+            y[(size_t) b] = o;
+        }
+    }
+    void section2 (std::array<float, B>& z1, std::array<float, B>& z2, const std::array<float, B>& x, std::array<float, B>& y) const noexcept
+    {
+        for (int b = 0; b < B; ++b)
+        {
+            const float xi = x[(size_t) b];
+            const float o = db0[(size_t) b] * xi + z1[(size_t) b];
+            z1[(size_t) b] = db1[(size_t) b] * xi - da1[(size_t) b] * o + z2[(size_t) b];
+            z2[(size_t) b] = db2[(size_t) b] * xi - da2[(size_t) b] * o;
+            y[(size_t) b] = o;
+        }
+    }
     struct Svf { float z1 = 0.0f, z2 = 0.0f; };
     static float bell (Svf& s, float x, float a1, float a2, float a3, float m1) noexcept
     {
@@ -958,7 +1003,8 @@ private:
     static double freq (int b) noexcept { return 200.0 * std::pow (2.0, b / 3.0); }   // 1/3-octave: 200 Hz - 10 kHz
     static constexpr double kQ = 4.32, kDetQ = 2.8;   // detectors: two sections of Q 2.8 = about a third of an octave
     double fs = 48000.0;
-    std::array<std::array<Biquad, 2>, B> detV, detW;
+    std::array<float, B> db0 {}, db1 {}, db2 {}, da1 {}, da2 {}, gwf {};
+    std::array<std::array<float, B>, 2> vz1 {}, vz2 {}, wz1 {}, wz2 {};   // [section][band]
     std::array<double, B> gw {};
     std::array<std::array<float, B>, B> inv {};
     std::array<std::array<Svf, 2>, B> ic {};
@@ -967,6 +1013,78 @@ private:
     std::array<int, B> ramp {};
     int count = 0;
     bool moving = false;
+};
+
+//== SHAPE (4.0) ===================================================================================================
+// GATED: the tail stays open while the voice sounds and for TIME after it, then closes in ~15 ms (the classic gated
+// reverb). REVERSE: the tail is played backwards in segments of TIME - two heads half a segment apart, sin^2 / cos^2
+// windows summing to exactly 1 - so a decaying tail becomes a swell (it arrives TIME after the word, by nature).
+class Shape
+{
+public:
+    void prepare (double sampleRate)
+    {
+        fs = sampleRate;
+        for (auto& b : buf)
+            b.prepare ((int) std::ceil (2.1 * fs));   // two segments of up to 1 s
+        atk = 1.0f - std::exp (-1.0f / (0.001f * (float) fs));
+        relEnv = 1.0f - std::exp (-1.0f / (0.01f * (float) fs));   // the voice stopping is seen within ~35 ms
+        gOpen = 1.0f - std::exp (-1.0f / (0.002f * (float) fs));
+        gClose = 1.0f - std::exp (-1.0f / (0.015f * (float) fs));
+        reset();
+    }
+    void reset() noexcept
+    {
+        for (auto& b : buf) b.reset();
+        env = 0.0f; peakDb = -100.0f; gain = 0.0f; since = 1 << 30; phase = 0;
+    }
+    void set (int modeIn, float ms) noexcept
+    {
+        mode = std::clamp (modeIn, 0, 2);
+        T = std::max (8, (int) std::lround (std::clamp (ms, 50.0f, 1000.0f) * 0.001f * (float) fs));
+        T -= T & 1;
+    }
+    int mode = 0;
+    // in = the reverb's input (the gate listens to it), r = the reverb's output (shaped in place)
+    void process (float inL, float inR, float& rL, float& rR) noexcept
+    {
+        if (mode == 1)
+        {
+            const float a = std::max (std::abs (inL), std::abs (inR));
+            env += (a - env) * (a > env ? atk : relEnv);
+            const float e = 20.0f * std::log10 (env + 1.0e-9f);
+            peakDb = std::max (e, peakDb - 3.0f / (float) fs);   // the voice's recent loud level, falling 3 dB/s
+            if (e > peakDb - 30.0f && e > -70.0f) since = 0; else if (since < (1 << 30)) ++since;
+            const float t = since < T ? 1.0f : 0.0f;
+            gain += (t - gain) * (t > gain ? gOpen : gClose);
+            rL *= gain;
+            rR *= gain;
+        }
+        else if (mode == 2)
+        {
+            buf[0].push (rL);
+            buf[1].push (rR);
+            float oL = 0.0f, oR = 0.0f;
+            for (int h = 0; h < 2; ++h)
+            {
+                const int ph = (phase + h * (T / 2)) % T;
+                // the head started its segment `ph` samples ago and reads the segment before it backwards
+                const int d = 2 * ph;   // reads the last T samples before (and at) the segment's start, newest first
+                const float sw = (float) std::sin (kPi * (double) ph / (double) T), w = sw * sw;
+                oL += w * buf[0].tap (d);
+                oR += w * buf[1].tap (d);
+            }
+            phase = (phase + 1) % T;
+            rL = oL;
+            rR = oR;
+        }
+    }
+
+private:
+    double fs = 48000.0;
+    std::array<Line, 2> buf;
+    int T = 14400, phase = 0, since = 1 << 30;
+    float env = 0.0f, peakDb = -100.0f, gain = 0.0f, atk = 0.02f, relEnv = 0.0004f, gOpen = 0.01f, gClose = 0.001f;
 };
 
 //== the engine =====================================================================================================
@@ -984,6 +1102,7 @@ public:
         rev2.prepare (fs);
         dly.prepare (fs);
         unmask.prepare (fs);
+        shapeFx.prepare (fs);
         prepared = true;
         reset();
         apply (params, true);
@@ -997,6 +1116,7 @@ public:
         rev2.reset();
         dly.reset();
         unmask.reset();
+        shapeFx.reset();
         ess.reset();
         for (auto& f : revLc)
             f.reset();
@@ -1085,6 +1205,8 @@ public:
                     rev2.process (iL, iR, rL, rR);   // true stereo
                 else
                     rev.process (iL, iR, rL, rR);
+                if (shapeFx.mode != 0)
+                    shapeFx.process (iL, iR, rL, rR);   // GATED / REVERSE; NATURAL is not run at all
                 rL *= typeFade;
                 rR *= typeFade;
             }
@@ -1126,13 +1248,13 @@ public:
                     typeFade = 0.0f;
                     rev.reset();
                     rev2.reset();
-                    activeEngine = params.engine == 1 ? 1 : 2;
+                    activeEngine = (params.engine == 1 && params.space <= 0) ? 1 : 2;
                     rev.configure (pendingType, params.size);
                     rev.setDecay (params.decay, params.damping, params.modulation);
                     rev.setEarly (params.early);
-                    rev2.configure (pendingType, params.size);
-                    rev2.setDecay (params.decay, params.bass / 100.0f, params.damping, params.modulation, params.freeze);
-                    rev2.setEarly (params.early);
+                    configureRev2 (params, pendingType);
+                    shapeFx.reset();
+                    shapeFx.set (params.shape, params.shapeMs);
                     pendingType = -1;
                 }
             }
@@ -1151,33 +1273,53 @@ public:
 private:
     static bool tailSamplesLeft (int64_t& left, int n) noexcept { left -= n; return left > 0; }
 
+    // the 2.0 core: the TYPE's algorithm, or (4.0) a modelled room
+    void configureRev2 (const Params& p, int type) noexcept
+    {
+        if (p.space > 0)
+        {
+            rev2.configureReal (p.space - 1);
+            rev2.setRealDecay (p.modulation, p.freeze);
+        }
+        else
+        {
+            rev2.configure (type, p.size);
+            rev2.setDecay (p.decay, p.bass / 100.0f, p.damping, p.modulation, p.freeze);
+        }
+        rev2.setEarly (p.early);
+    }
     void apply (const Params& p, bool force) noexcept
     {
-        const int eng = p.engine == 1 ? 1 : 2;
-        if (force || p.type != lastType || eng != activeEngine)
+        const int eng = (p.engine == 1 && p.space <= 0) ? 1 : 2;   // a real room always runs on the 2.0 core
+        if (force || p.type != lastType || eng != activeEngine || p.space != lastSpace)
         {
             if (force)
             {
                 rev.configure (p.type, p.size);
-                rev2.configure (p.type, p.size);
+                configureRev2 (p, p.type);
                 activeEngine = eng;
                 typeFade = 1.0f;
             }
             else
-                pendingType = p.type;   // TYPE or ENGINE: fade out, rebuild, fade in
+                pendingType = p.type;   // TYPE, ENGINE or SPACE: fade out, rebuild, fade in
             lastType = p.type;
             lastSize = p.size;
+            lastSpace = p.space;
         }
         else if (std::abs (p.size - lastSize) > 1.0e-4f)
         {
             rev.configure (p.type, p.size);   // the line lengths glide to the new size (1.0)
-            rev2.configure (p.type, p.size);
+            if (p.space <= 0)
+                rev2.configure (p.type, p.size);
             lastSize = p.size;
         }
         rev.setDecay (p.decay, p.damping, p.modulation);
         rev.setPreDelay (p.preDelayMs);
         rev.setEarly (p.early);
-        rev2.setDecay (p.decay, p.bass / 100.0f, p.damping, p.modulation, p.freeze);
+        if (p.space > 0)
+            rev2.setRealDecay (p.modulation, p.freeze);
+        else
+            rev2.setDecay (p.decay, p.bass / 100.0f, p.damping, p.modulation, p.freeze);
         rev2.setEarly (p.early);
         // PRE-DELAY: ms, or a note value of the host tempo (2.0 core)
         const double preSec = p.preSync ? noteBeats (p.preNote) * 60.0 / std::clamp (p.bpm, 20.0, 400.0) : (double) p.preDelayMs * 0.001;
@@ -1191,6 +1333,19 @@ private:
         dly.set (delaySamples(), (double) look, p.feedback, p.pingPong, p.dlyLowCut, p.dlyHighCut, p.drive);
         dly.setCharacter (p.dlyMode, p.wowFlutter, p.diffuse);
         unmask.setAmount (p.unmask);
+        if (force)
+        {
+            shapeFx.reset();
+            shapeFx.set (p.shape, p.shapeMs);
+            lastShape = p.shape;
+        }
+        else if (p.shape != lastShape)
+        {
+            pendingType = p.type;   // SHAPE: fade out, switch, fade in (applied with the rebuild)
+            lastShape = p.shape;
+        }
+        else if (pendingType < 0)
+            shapeFx.set (p.shape, p.shapeMs);
         unmaskOn = p.unmask > 0.0f || unmask.active();
         widthT = std::clamp (p.width, 0.0f, 200.0f) / 100.0f;
         revT = std::pow (10.0f, p.reverbDb / 20.0f);
@@ -1235,6 +1390,7 @@ private:
     int activeEngine = 2;
     Delay dly;
     Unmask unmask;
+    Shape shapeFx;
     bool unmaskOn = false;
     std::array<Biquad, 2> revLc, revHc;
     float essP = 0.0f, essGain = 1.0f, env = 0.0f, peakDb = -60.0f, duckGain = 1.0f;
@@ -1248,7 +1404,7 @@ private:
             g = t;
     }
     float typeFade = 1.0f;
-    int pendingType = -1, lastType = -1, forcedEss = -1;
+    int pendingType = -1, lastType = -1, lastSpace = -1, lastShape = -1, forcedEss = -1;
     float lastSize = -1.0f;
     bool reverbTail = false, delayTail = false, wasReverbOn = true, wasDelayOn = false;
     int64_t revTailLeft = 0, dlyTailLeft = 0, sample = 0;

@@ -1,5 +1,27 @@
 # Changelog
 
+## 4.0.0 - 2026-10-30
+**Real rooms, and the tail's shape**:
+- **REAL SPACES** (new): eight real rooms modelled from their size and wall materials - Vocal Booth, Tiled Bathroom,
+  Living Room, Studio Live Room, Concrete Stairwell, Small Club, Wood Chapel, Car Park. Each plays its own early
+  reflections (the image-source method: the 48 strongest per path up to the room's mixing time, three bands, two sources
+  into a spaced pair of mics - true stereo) and hands over to a tail sized by the room's mean free path that decays per
+  band as the room does. Held to the physics: the decay at 1 kHz within 8 % of Eyring's for every room (independent
+  audit), every band within 9 % in seven rooms (the booth's 0.09 s mids come out 0.10 s), the balance of early and late
+  energy (C50) within 0.4 dB of a full hybrid simulation, the first reflection on time to 0.01 ms.
+  The room sets its decay and size; EARLY, PRE-DELAY, MOD, the cuts, WIDTH, LEVEL, UNMASK and the ducks still work.
+- **SHAPE** (new): NATURAL, **GATED** (the tail stays open while you rap and for TIME after, then closes - gone 88 dB
+  0.45 s after the voice at 300 ms) and **REVERSE** (the tail plays backwards in segments of TIME: a swell rising after
+  each word; two crossfaded heads keep a steady tail's level within 1.3 dB of NATURAL's).
+- **Presets**: Real: Vocal Booth, Tiled Bathroom, Studio Live Room, Concrete Stairwell, Small Club, Wood Chapel, Car
+  Park; Gated Hall; Reverse Swell (26 in all).
+- **Your sessions are safe**: sessions saved with 3.0, 2.0 and 1.0 render bit-identically to 3.0.0, 2.0.0 and 1.0.1
+  (every factory preset, checked by the independent audit).
+- **Lighter**: UNMASK's 18 bands now run several per instruction (the same arithmetic, bit for bit): the 3.0 presets
+  cost 7 - 9 % less CPU (Vocal Plate 4.6 -> 4.25 % of a core); a real room 5.6 - 5.7 % with UNMASK.
+- Verified: DSP 400, plugin 34, ASan + UBSan clean, independent audit 91/91, pluginval strictness 10, VST3 validator
+  47/47.
+
 ## 3.0.0 - 2026-10-30
 **The delay gets a character, the effects learn to step out of the voice's way**, measured on the artist's dry vocal:
 - **UNMASK** (new): the reverb and the delay step back only where they would cover the voice - per third of an octave,

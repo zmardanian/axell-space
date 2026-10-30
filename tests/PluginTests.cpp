@@ -77,7 +77,8 @@ bool sameParams (const axs::Params& a, const axs::Params& b)
            && near (a.delayToReverb, b.delayToReverb) && a.essDuck == b.essDuck && near (a.essDuckDb, b.essDuckDb)
            && near (a.voiceDuckDb, b.voiceDuckDb) && near (a.duckReleaseMs, b.duckReleaseMs) && near (a.mix, b.mix) && near (a.outputDb, b.outputDb)
            && a.engine == b.engine && near (a.bass, b.bass) && a.freeze == b.freeze && a.preSync == b.preSync && a.preNote == b.preNote
-           && a.dlyMode == b.dlyMode && near (a.wowFlutter, b.wowFlutter) && near (a.diffuse, b.diffuse) && near (a.unmask, b.unmask);
+           && a.dlyMode == b.dlyMode && near (a.wowFlutter, b.wowFlutter) && near (a.diffuse, b.diffuse) && near (a.unmask, b.unmask)
+           && a.space == b.space && a.shape == b.shape && near (a.shapeMs, b.shapeMs);
 }
 } // namespace
 
@@ -93,7 +94,7 @@ int main()
         auto xml = juce::AudioProcessor::getXmlFromBinary (mb.getData(), (int) mb.getSize());
         auto tree = juce::ValueTree::fromXml (*xml);
         tree.removeChild (tree.getChildWithProperty ("id", "engine"), nullptr);
-        for (const char* id : { "bass", "freeze", "preSync", "preNote", "dlyMode", "wow", "diffuse", "unmask" })
+        for (const char* id : { "bass", "freeze", "preSync", "preNote", "dlyMode", "wow", "diffuse", "unmask", "space", "shape", "shapeTime" })
             tree.removeChild (tree.getChildWithProperty ("id", id), nullptr);
         juce::MemoryBlock old;
         juce::AudioProcessor::copyXmlToBinary (*tree.createXml(), old);
@@ -106,14 +107,14 @@ int main()
         {
             // a 2.0.0 session (no 3.0 parameters): CLEAN delay, no diffusion, no UNMASK = exactly the 2.0 sound
             auto t2 = juce::ValueTree::fromXml (*xml);
-            for (const char* id : { "dlyMode", "wow", "diffuse", "unmask" })
+            for (const char* id : { "dlyMode", "wow", "diffuse", "unmask", "space", "shape", "shapeTime" })
                 t2.removeChild (t2.getChildWithProperty ("id", id), nullptr);
             juce::MemoryBlock s2;
             juce::AudioProcessor::copyXmlToBinary (*t2.createXml(), s2);
             SpaceProcessor f;
             f.setStateInformation (s2.getData(), (int) s2.getSize());
             const auto q = f.readParams();
-            check (q.engine == 2 && q.dlyMode == 0 && q.diffuse == 0.0f && q.unmask == 0.0f, "a 2.0 session (no 3.0 parameters) keeps the 2.0 sound: CLEAN delay, DIFFUSE 0, UNMASK 0");
+            check (q.engine == 2 && q.dlyMode == 0 && q.diffuse == 0.0f && q.unmask == 0.0f && q.space == 0 && q.shape == 0, "a 2.0 session (no 3.0 / 4.0 parameters) keeps the 2.0 sound: CLEAN delay, DIFFUSE 0, UNMASK 0, no real space");
         }
         c.setCurrentProgram (1);
         check (c.readParams().engine == 2, "a factory preset selects the 2.0 reverb");
@@ -126,16 +127,16 @@ int main()
                                          "dlyLowCut", "dlyHighCut", "drive", "delayLevel", "delayToReverb", "essDuck", "essDuckDb",
                                          "voiceDuck", "duckRelease", "mix", "output",
                                          // 2.0, appended
-                                         "engine", "bass", "freeze", "preSync", "preNote", "dlyMode", "wow", "diffuse", "unmask" };
+                                         "engine", "bass", "freeze", "preSync", "preNote", "dlyMode", "wow", "diffuse", "unmask", "space", "shape", "shapeTime" };
         auto& params = p.getParameters();
         check (params.size() == frozen.size(), "parameter count = " + juce::String (frozen.size()));
         bool ids = true;
         for (int i = 0; i < params.size() && i < frozen.size(); ++i)
         {
             auto* wp = dynamic_cast<juce::AudioProcessorParameterWithID*> (params[i]);
-            ids = ids && wp != nullptr && wp->getParameterID() == frozen[i] && wp->getVersionHint() == (i < 29 ? 1 : (i < 34 ? 2 : 3));
+            ids = ids && wp != nullptr && wp->getParameterID() == frozen[i] && wp->getVersionHint() == (i < 29 ? 1 : (i < 34 ? 2 : (i < 38 ? 3 : 4)));
         }
-        check (ids, "every parameter in its frozen place, version hint 1 (1.0) / 2 (2.0) / 3 (3.0)");
+        check (ids, "every parameter in its frozen place, version hint 1 (1.0) / 2 (2.0) / 3 (3.0) / 4 (4.0)");
         check (p.readParams().engine == 2, "a new instance uses the 2.0 reverb core");
         check (sameParams (p.readParams(), axs::Params {}), "defaults = the engine's defaults (= the Init preset)");
         check (p.getLatencySamples() == 0 && p.getTailLengthSeconds() >= 10.0, "no latency; tail length covers the longest reverb");

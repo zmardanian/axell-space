@@ -552,7 +552,7 @@ static void testAllocAndCpu (bool quick)
     check ("no memory allocation in process() (every preset, random blocks)", allocCount, 0, 0, "allocs");
     if (quick)
         return;
-    for (const char* name : { "Vocal Plate", "Hall Hook", "Ad-lib Tail" })
+    for (const char* name : { "Vocal Plate", "Hall Hook", "Ad-lib Tail", "Real: Studio Live Room", "Real: Wood Chapel", "Reverse Swell" })
         for (const auto& pr : factoryPresets())
             if (std::string (pr.name) == name)
             {
@@ -728,6 +728,83 @@ static void testUnmask (double fs)
     }
 }
 
+//== 4.0: REAL SPACES and SHAPE ====================================================================================
+static void testReal (double fs, bool quick)
+{
+    const std::string R = rateName (fs);
+    auto mono = [] (const Buf& y) { std::vector<float> m (y[0].size()); for (size_t i = 0; i < m.size(); ++i) m[i] = 0.5f * (y[0][i] + y[1][i]); return m; };
+    for (int k = 0; k < axs::real::kRooms; ++k)
+    {
+        if (quick && k % 3 != 0) continue;
+        const auto& rm = axs::real::kRoomList[k];
+        Params p = wetOnly (Params {});
+        p.space = k + 1; p.preDelayMs = 0.0f; p.delayOn = false;
+        const auto y = render (fs, p, impulse (fs, std::min (12.0, 1.7 * std::max ({ rm.eyLow, rm.eyMid, rm.eyHigh }) + 0.6)));
+        const auto m = mono (y);
+        const std::string n = std::string (rm.name);
+        check (n + ": decay at 1 kHz re the room's physics (Eyring)" + R, rt60 (m, fs, 1000) / rm.eyMid, 0.85, 1.15, "x");
+        check (n + ": decay at 250 Hz re the room's physics" + R, rt60 (m, fs, 250) / (0.5 * (rm.eyLow + rm.eyMid)), 0.6, 1.4, "x");
+        check (n + ": decay at 4 kHz re the room's physics" + R, rt60 (m, fs, 4000) / (0.5 * (rm.eyMid + rm.eyHigh)), 0.6, 1.4, "x");
+        // the first reflection: as late after the wet path's start as the geometry says (the wet path's look-ahead first)
+        Engine e;
+        e.setParams (p);
+        e.prepare (fs);
+        const double look = (double) e.lookAheadSamples();
+        const size_t o = onset (y[0]);
+        double first = 1.0e9;
+        for (int q = 0; q < 4; ++q) first = std::min (first, (double) rm.taps[q][0].t);
+        check (n + ": first reflection on time (re the geometry)" + R, 1000.0 * (((double) o - look) / fs - first), -0.1, 0.1, "ms");
+        double eL = 0, eR = 0;
+        for (size_t i = 0; i < y[0].size(); ++i) { eL += (double) y[0][i] * y[0][i]; eR += (double) y[1][i] * y[1][i]; }
+        check (n + ": a centred voice's room is balanced (L re R)" + R, 10.0 * std::log10 (eL / eR), -1.0, 1.0, "dB");
+    }
+}
+static void testShape (double fs)
+{
+    const std::string R = rateName (fs);
+    // GATED 300 ms: a 0.5 s burst into a 3 s hall - open while it sounds and for 300 ms after, then closed
+    {
+        Params p = wetOnly (Params {});
+        p.type = kHall; p.decay = 3.0f; p.preDelayMs = 0.0f; p.delayOn = false; p.shape = 1; p.shapeMs = 300.0f;
+        Buf x (2, std::vector<float> ((size_t) (2.0 * fs)));
+        std::mt19937 g (3);
+        std::normal_distribution<float> nd (0.0f, 0.2f);
+        for (size_t i = 0; i < (size_t) (0.5 * fs); ++i) x[0][i] = x[1][i] = nd (g);
+        const auto y = render (fs, p, x)[0];
+        auto lvl = [&] (double a, double b) { double e = 0; for (size_t i = (size_t) (a * fs); i < (size_t) (b * fs); ++i) e += (double) y[i] * y[i]; return 10.0 * std::log10 (e / ((b - a) * fs) + 1e-30); };
+        const double during = lvl (0.35, 0.5), hold = lvl (0.62, 0.72), after = lvl (0.95, 1.2);
+        check ("GATED 300 ms: the tail holds after the voice (0.12 - 0.22 s after it, re during)" + R, hold - during, -12.0, 1.0, "dB");
+        check ("GATED 300 ms: then it is gone (0.45 s after the voice, re during)" + R, after - during, -400.0, -40.0, "dB");
+    }
+    // REVERSE 400 ms: an impulse into a 2 s hall comes back as a swell (each segment rises)
+    {
+        Params p = wetOnly (Params {});
+        p.type = kHall; p.decay = 2.0f; p.preDelayMs = 0.0f; p.delayOn = false; p.shape = 2; p.shapeMs = 400.0f;
+        const auto y = render (fs, p, impulse (fs, 2.0))[0];
+        // the first full reversed segment of the tail: its last quarter louder than its first quarter
+        double a = 0, b = 0;
+        const size_t s0 = (size_t) (0.42 * fs), q = (size_t) (0.1 * fs);
+        for (size_t i = s0; i < s0 + q; ++i) a += (double) y[i] * y[i];
+        for (size_t i = s0 + 2 * q; i < s0 + 3 * q; ++i) b += (double) y[i] * y[i];
+        check ("REVERSE 400 ms: the tail comes back as a swell (later part re earlier part)" + R, 10.0 * std::log10 (b / a), 3.0, 60.0, "dB");
+    }
+    // REVERSE keeps the level: steady noise through NATURAL and REVERSE (the two heads' windows sum to 1)
+    {
+        Params p = wetOnly (Params {});
+        p.type = kHall; p.decay = 1.0f; p.preDelayMs = 0.0f; p.delayOn = false;
+        Buf x (2, std::vector<float> ((size_t) (4.0 * fs)));
+        std::mt19937 g (9);
+        std::normal_distribution<float> nd (0.0f, 0.1f);
+        for (size_t i = 0; i < x[0].size(); ++i) x[0][i] = x[1][i] = nd (g);
+        const auto a = render (fs, p, x)[0];
+        p.shape = 2; p.shapeMs = 250.0f;
+        const auto b = render (fs, p, x)[0];
+        double ea = 0, eb = 0;
+        for (size_t i = (size_t) (1.5 * fs); i < a.size(); ++i) { ea += (double) a[i] * a[i]; eb += (double) b[i] * b[i]; }
+        check ("REVERSE: the level of a steady tail as NATURAL's" + R, 10.0 * std::log10 (eb / ea), -1.5, 1.5, "dB");
+    }
+}
+
 int main (int argc, char** argv)
 {
     const bool quick = argc > 1 && std::strcmp (argv[1], "--quick") == 0;
@@ -740,6 +817,8 @@ int main (int argc, char** argv)
         testDelay (fs);
         testDelay3 (fs);
         testUnmask (fs);
+        testReal (fs, quick);
+        testShape (fs);
         testDucking (fs);
         testSafety (fs);
     }

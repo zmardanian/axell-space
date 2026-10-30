@@ -18,6 +18,8 @@ texts are reproduced here as shipped in the exact JUCE version used.
 | CMU ARCTIC speech databases (slt, bdl, jmk) | http://www.festvox.org/cmu_arctic/ (Carnegie Mellon University, 2003) | free for any use, notice below |
 | CSTR VCTK Corpus 0.92 (108 speakers, 60 utterances each, mic1) | Yamagishi, Veaux, MacDonald, University of Edinburgh, https://doi.org/10.7488/ds/2645 | CC BY 4.0 |
 | Montreal Forced Aligner English (US) ARPA acoustic model and dictionary v3.0.0 (used to label VCTK; not shipped) | McAuliffe, Sonderegger, https://mfa-models.readthedocs.io | CC BY 4.0 |
+| pyroomacoustics 0.10.1 (used offline to compute the REAL SPACES room data in `Source/RealRooms.h`; not shipped) | Scheibler, Bezzam, Dokmanic, https://github.com/LCAV/pyroomacoustics | MIT |
+| Wall-material absorption and scattering table (as shipped in pyroomacoustics, from M. Vorländer, "Auralization", Springer 2008, appendix) | used offline for the REAL SPACES rooms | MIT (pyroomacoustics) / published data |
 
 ESS DUCK uses the Axell core's LIVE sibilance network (`external/axell-core/include/axell/dsp/SibilanceModel3Live.h`,
 from Axell Velvet 3.0). Its weights were trained on features computed from the CMU ARCTIC recordings of the speakers
@@ -42,6 +44,11 @@ product are used):
   reflections).
 - A. de Cheveigne, H. Kawahara, "YIN, a fundamental frequency estimator for speech and music", JASA 111 (2002) (the
   sibilance detector's aperiodicity feature).
+- C. F. Eyring, "Reverberation time in 'dead' rooms", JASA 1 (1930) (REAL SPACES: each room's decay per octave).
+- A. Lindau, L. Kosanke, S. Weinzierl, "Perceptual evaluation of model- and signal-based predictors of the mixing time in
+  binaural room impulse responses", JAES 60 (2012) (REAL SPACES: where the early reflections hand over to the tail).
+- R. Scheibler, E. Bezzam, I. Dokmanic, "Pyroomacoustics: a Python package for audio room simulations and array
+  processing algorithms", ICASSP 2018 (the offline image-source and hybrid simulations of the REAL SPACES rooms).
 - Tests only: J. S. Abel, P. Huang, "A simple, robust measure of reverberation echo density", AES 121st Convention
   (2006); ISO 3382-1 (T30).
 

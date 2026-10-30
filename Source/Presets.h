@@ -54,6 +54,14 @@ inline Params mix (Params p, float m) { p.mix = m; return p; }
 // 3.0
 inline Params character (Params p, int mode, float wow, float diffuse) { p.dlyMode = mode; p.wowFlutter = wow; p.diffuse = diffuse; return p; }
 inline Params unmasked (Params p, float pct) { p.unmask = pct; return p; }
+// 4.0
+inline Params room (int space, float preMs, float mix, float early = 50.0f)
+{
+    Params p = reverb (kRoom, 1.0f, preMs, 40.0f, mix, 50.0f, early, 120.0f, 14000.0f);
+    p.space = space;
+    return p;
+}
+inline Params shaped (Params p, int shape, float ms) { p.shape = shape; p.shapeMs = ms; return p; }
 } // namespace detail
 
 inline const std::vector<Preset>& factoryPresets()
@@ -98,6 +106,26 @@ inline const std::vector<Preset>& factoryPresets()
         { "Unmasked Hall", "A big hall that stays out of the words: it steps back where the voice sits, in the bands it uses "
           "(UNMASK 100 %), and ducks only lightly - the air and the body stay.",
           unmasked (duck (reverb (kHall, 2.8f, 30.0f, 50.0f, 30.0f, 65.0f, 45.0f), 4.0f, 500.0f), 100.0f) },
+        // 4.0: real rooms (modelled from their size and walls) and shapes
+        { "Real: Vocal Booth", "A real treated booth around the voice: takes the dryness off a close vocal without any tail.",
+          room (1, 0.0f, 20.0f) },
+        { "Real: Tiled Bathroom", "The bathroom-tiles sound: bright, close reflections and a booming low end, 0.9 s.",
+          unmasked (room (2, 0.0f, 16.0f), 40.0f) },
+        { "Real: Studio Live Room", "A wooden live room (8 x 6 m), 1.2 s: natural, warm, the voice in a real space.",
+          unmasked (room (4, 10.0f, 20.0f), 40.0f) },
+        { "Real: Concrete Stairwell", "A tall concrete stairwell, 3 s: hard, ringing, a little dark at the top - for hooks with grit.",
+          unmasked (duck (room (5, 10.0f, 20.0f), 4.0f, 400.0f), 50.0f) },
+        { "Real: Small Club", "A brick club with a crowd: short and punchy in the mids, the lows hang on.",
+          unmasked (room (6, 5.0f, 20.0f), 40.0f) },
+        { "Real: Wood Chapel", "A wooden chapel, 2.2 s: wide, sweet and even - for slow, melodic lines.",
+          unmasked (duck (room (7, 20.0f, 24.0f), 4.0f, 500.0f), 50.0f) },
+        { "Real: Car Park", "An underground car park, 2.9 s: the concrete flutter and the long, cold tail of a real one.",
+          unmasked (duck (room (8, 10.0f, 18.0f), 4.0f, 400.0f), 40.0f) },
+        { "Gated Hall", "A big hall cut 280 ms after every word: huge and tight at once, the classic gated sound.",
+          shaped (mix (reverb (kHall, 3.0f, 10.0f, 40.0f, 22.0f, 80.0f, 40.0f), 22.0f), 1, 280.0f) },
+        { "Reverse Swell", "The tail plays backwards: a swell rises after each word into the next (500 ms) - for ad-libs and "
+          "transitions.",
+          unmasked (shaped (mix (reverb (kPlate, 2.5f, 0.0f, 50.0f, 25.0f), 25.0f), 2, 500.0f), 30.0f) },
     };
     return list;
 }

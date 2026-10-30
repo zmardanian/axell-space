@@ -64,8 +64,9 @@ PASS  ESS DUCK 12 dB: the esses in the effect (re ESS DUCK off) @ 96000: -12.0 d
 PASS  ESS DUCK: the vowels in the effect, the most-changed vowel @ 96000: -0.00 dB (all vowels -0.00 dB)
 PASS  VOICE DUCK 12 dB: the reverb while the voice sounds (re off): -11.8 dB
 PASS  VOICE DUCK: the reverb in the pauses (re off) - it blooms back: -0.7 dB
-PASS  all 17 factory presets: finite, peak at most +6 dB over the input's: ok
+PASS  all 26 factory presets: finite, peak at most +6 dB over the input's: ok
 PASS  every preset sounds different from Init: ok
+PASS  a 3.0 session: every one of its 17 factory presets renders bit-identically to AxellSpace-3.0.0-linux-x86_64: max difference 0
 PASS  a 2.0 session: every one of its 13 factory presets renders bit-identically to AxellSpace-2.0.0-linux-x86_64: max difference 0
 PASS  a 1.0 session (the 1.0 core): every one of its 13 factory presets renders bit-identically to AxellSpace-1.0.1-linux-x86_64: max difference 0
 PASS  2.0 Booth: the tail's colour (metallic peaks; noise-like ~8.4): 9.96 dB (1.0 core: 10.28)
@@ -78,5 +79,15 @@ PASS  TAPE: each pass darker (repeat 3 re repeat 1, 10 kHz re 1 kHz): -13.44 dB
 PASS  ANALOG: each pass darker still: -38.86 dB
 PASS  UNMASK 100 %: the tail steps back where the voice holds (600 - 800 Hz): -10.10 dB
 PASS  UNMASK 100 %: the tail stays where the voice leaves room (4 - 8 kHz): -0.02 dB
+PASS  REAL Vocal Booth: decay at 1 kHz (T30) re its physics (0.09 s): 0.083 s (-3 %)
+PASS  REAL Tiled Bathroom: decay at 1 kHz (T30) re its physics (0.90 s): 0.847 s (-6 %)
+PASS  REAL Living Room: decay at 1 kHz (T30) re its physics (0.31 s): 0.322 s (+4 %)
+PASS  REAL Studio Live Room: decay at 1 kHz (T30) re its physics (1.23 s): 1.143 s (-7 %)
+PASS  REAL Concrete Stairwell: decay at 1 kHz (T30) re its physics (3.07 s): 2.912 s (-5 %)
+PASS  REAL Small Club: decay at 1 kHz (T30) re its physics (0.90 s): 0.828 s (-8 %)
+PASS  REAL Wood Chapel: decay at 1 kHz (T30) re its physics (2.19 s): 2.160 s (-2 %)
+PASS  REAL Car Park: decay at 1 kHz (T30) re its physics (2.92 s): 2.885 s (-1 %)
+PASS  GATED 300 ms: open 0.12 - 0.22 s after the voice, closed 0.45 s after it (re during): -3.3 / -87.6 dB
+PASS  REVERSE 400 ms: an impulse's tail comes back as a swell (its loudest moment after the onset): 396 ms
 
-ALL PASS: 80 of 80 independent checks passed (34 s)
+ALL PASS: 91 of 91 independent checks passed (51 s)

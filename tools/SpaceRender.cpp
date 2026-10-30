@@ -54,6 +54,9 @@ static void setKey (axs::Params& p, const std::string& k, double v, int& block)
     else if (k == "wow") p.wowFlutter = (float) v;
     else if (k == "diffuse") p.diffuse = (float) v;
     else if (k == "unmask") p.unmask = (float) v;
+    else if (k == "space") p.space = (int) v;
+    else if (k == "shape") p.shape = (int) v;
+    else if (k == "shapetime") p.shapeMs = (float) v;
     else if (k == "block") block = (int) v;
     else std::fprintf (stderr, "unknown key %s\n", k.c_str());
 }

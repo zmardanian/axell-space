@@ -73,6 +73,15 @@ APVTS::ParameterLayout SpaceProcessor::createLayout()
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "wow", 3 }, "Wow & Flutter", NormalisableRange<float> (0.0f, 100.0f, 0.1f), d.wowFlutter, fmt (pctText)));
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "diffuse", 3 }, "Delay Diffuse", NormalisableRange<float> (0.0f, 100.0f, 0.1f), d.diffuse, fmt (pctText)));
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "unmask", 3 }, "Unmask", NormalisableRange<float> (0.0f, 100.0f, 0.1f), d.unmask, fmt (pctText)));
+    // 4.0 (appended; Off = the TYPE's algorithm, so older sessions are unchanged): a modelled real room
+    {
+        StringArray rooms { "Real space: off" };
+        for (int i = 0; i < axs::real::kRooms; ++i)
+            rooms.add (axs::real::kRoomList[i].name);
+        p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { "space", 4 }, "Real Space", rooms, d.space));
+    }
+    p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { "shape", 4 }, "Reverb Shape", StringArray { "Natural", "Gated", "Reverse" }, d.shape));
+    p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "shapeTime", 4 }, "Shape Time", skewed (50.0f, 1000.0f, 1.0f, 300.0f), d.shapeMs, fmt (msText)));
     return { p.begin(), p.end() };
 }
 
@@ -126,6 +135,9 @@ axs::Params SpaceProcessor::readParams() const
     p.wowFlutter = v ("wow");
     p.diffuse = v ("diffuse");
     p.unmask = v ("unmask");
+    p.space = juce::roundToInt (v ("space"));
+    p.shape = juce::roundToInt (v ("shape"));
+    p.shapeMs = v ("shapeTime");
     p.bpm = bpm.load();
     return p;
 }
@@ -173,6 +185,9 @@ void SpaceProcessor::writeParams (const axs::Params& p)
     set ("wow", p.wowFlutter);
     set ("diffuse", p.diffuse);
     set ("unmask", p.unmask);
+    set ("space", (float) p.space);
+    set ("shape", (float) p.shape);
+    set ("shapeTime", p.shapeMs);
 }
 
 bool SpaceProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const

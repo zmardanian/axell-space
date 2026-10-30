@@ -45,6 +45,13 @@ const char* dlyHigh = "Darkens every repeat a little more, like tape or an analo
 const char* drive = "Soft saturation of the repeats: warm, worn repeats like an old tape echo.";
 const char* dlyLevel = "Level of the delay in the wet signal.";
 const char* toReverb = "Sends the delay's repeats into the reverb: the echoes melt into the space.";
+const char* shape = "The tail's shape. NATURAL: as it decays. GATED: it stays open while you rap and for TIME after, then "
+                    "closes at once - big and tight. REVERSE: the tail plays backwards in segments of TIME - a swell that "
+                    "rises after each word.";
+const char* shapeTime = "GATED: how long the tail holds after the voice. REVERSE: the length of each reversed swell.";
+const char* space = "REAL SPACES: eight real rooms modelled from their size and wall materials - their own early reflections "
+                    "and a tail that decays per band as the room does (within 10 % of the physics in seven rooms). The room "
+                    "sets the decay; EARLY, PRE-DELAY, MOD, the cuts, WIDTH and LEVEL still work. Off: the TYPE's algorithm.";
 const char* dlyMode = "The repeats' character. CLEAN: exact copies. TAPE: recorded on tape - each pass a little darker (about 6 dB less "
                       "at 10 kHz), a warm head bump, soft saturation, the tape's wow and flutter. ANALOG: a bucket-brigade line - "
                       "dark (3.6 kHz), soft clipping, a hint of clock jitter. A change crossfades over 20 ms.";
@@ -91,7 +98,8 @@ void SpaceView::paint (juce::Graphics& g)
     auto plot = r.reduced (14.0f, 12.0f).withTrimmedLeft (26.0f).withTrimmedBottom (16.0f).withTrimmedRight (110.0f);
     // the time axis: long enough for the longer of the reverb or the first four repeats
     const double lookMs = 1000.0 * look / rate;
-    const double rt = params.reverbOn ? params.decay : 0.0;
+    const double roomRt = params.space > 0 ? (double) axs::real::kRoomList[std::min (params.space, axs::real::kRooms) - 1].eyMid : -1.0;
+    const double rt = params.reverbOn ? (roomRt > 0.0 ? roomRt : params.decay) : 0.0;
     const double dly = params.sync ? axs::noteBeats (params.note) * 60.0 / std::max (20.0, params.bpm) : params.timeMs * 0.001;
     const double span = std::clamp (std::max ({ 0.6, (params.preDelayMs + lookMs) / 1000.0 + rt * 1.05, params.delayOn ? dly * 4.2 : 0.0 }), 0.6, 12.0);
     auto x = [&] (double t) { return plot.getX() + (float) (t / span) * plot.getWidth(); };
@@ -126,8 +134,8 @@ void SpaceView::paint (juce::Graphics& g)
             const double er = t0 + 0.012 + 0.06 * params.size / 100.0 * (params.type == axs::kHall ? 2.0 : (params.type == axs::kBooth ? 0.4 : 1.0));
             p.lineTo (x (er), y (-6.0 * (1.0 - params.early / 100.0) - 3.0));
         }
-        const double t60 = t0 + params.decay;
-        p.lineTo (x (std::min (span, t60)), y (-60.0 * std::min (1.0, (span - t0) / std::max (0.01, (double) params.decay))));
+        const double t60 = t0 + rt;
+        p.lineTo (x (std::min (span, t60)), y (-60.0 * std::min (1.0, (span - t0) / std::max (0.01, rt))));
         p.lineTo (x (std::min (span, t60)), plot.getBottom());
         p.closeSubPath();
         g.setColour (col::teal.withAlpha (0.22f));
@@ -220,7 +228,12 @@ SpaceEditor::SpaceEditor (SpaceProcessor& p) : AudioProcessorEditor (&p), proc (
     preSync.bind (s, "preSync", tip::preSync);
     preNote.bind (s, "preNote", tip::preNote);
     engine.bind (s, "engine", tip::engine);
-    for (auto* c : std::initializer_list<juce::Component*> { &bass, &freeze, &preSync, &preNote, &engine })
+    space.bind (s, "space", tip::space);
+    shape.bind (s, "shape", tip::shape);
+    shapeTime.bind (s, "shapeTime", tip::shapeTime);
+    content.addAndMakeVisible (shape);
+    content.addAndMakeVisible (shapeTime);
+    for (auto* c : std::initializer_list<juce::Component*> { &bass, &freeze, &preSync, &preNote, &engine, &space })
         content.addAndMakeVisible (c);
     revLevel.bind (s, "reverbLevel", tip::revLevel);
     delayOn.bind (s, "delayOn", tip::delayOn);
@@ -336,10 +349,15 @@ void SpaceEditor::layout()
             k->setBounds (row1.removeFromLeft (kw));
         for (auto* k : { &modulation, &revLow, &revHigh, &width, &revLevel })
             k->setBounds (a.removeFromLeft (kw));
+        // 4.0: SHAPE in the sixth place of the second row - its choice above, its TIME knob below
+        auto sh = a.removeFromLeft (kw);
+        shape.setBounds (sh.removeFromTop (24).withSizeKeepingCentre (juce::jmin (sh.getWidth() - 4, 92), 22));
+        shapeTime.setBounds (sh);
         // 2.0: PRE SYNC + its note, FREEZE
         preSync.setBounds (mini.removeFromLeft (110).withSizeKeepingCentre (104, 24));
         preNote.setBounds (mini.removeFromLeft (110).withSizeKeepingCentre (100, 24));
         freeze.setBounds (mini.removeFromRight (120).withSizeKeepingCentre (104, 24));
+        space.setBounds (mini.withSizeKeepingCentre (juce::jmin (mini.getWidth() - 10, 190), 24));
     }
     // DELAY: power + sync + note / time on the title row
     {
@@ -400,6 +418,16 @@ void SpaceEditor::updateVisibility()
     note.setVisible (s);
     time.setEnabled (! s);
     time.setAlpha (s ? 0.4f : 1.0f);
+    // a real room sets its own decay and size: those controls step aside
+    const bool real = proc.apvts.getRawParameterValue ("space")->load() > 0.5f;
+    for (juce::Component* c : std::initializer_list<juce::Component*> { &type, &engine, &size, &decay, &bass, &damping })
+    {
+        c->setEnabled (! real);
+        c->setAlpha (real ? 0.4f : 1.0f);
+    }
+    const bool natural = proc.apvts.getRawParameterValue ("shape")->load() < 0.5f;
+    shapeTime.setEnabled (! natural);
+    shapeTime.setAlpha (natural ? 0.4f : 1.0f);
     // WOW moves the tape / the bucket brigade: nothing to move in CLEAN
     const bool clean = proc.apvts.getRawParameterValue ("dlyMode")->load() < 0.5f;
     wow.setEnabled (! clean);

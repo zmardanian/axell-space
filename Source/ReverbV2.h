@@ -12,6 +12,8 @@
 #include <cmath>
 #include <vector>
 
+#include "RealRooms.h"
+
 namespace axs::v2
 {
 constexpr double kPi2 = 3.14159265358979323846;
@@ -88,7 +90,7 @@ class Reverb
 {
 public:
     static constexpr int N = 32;
-    enum Type { kBooth = 0, kRoom, kPlate, kHall };
+    enum Type { kBooth = 0, kRoom, kPlate, kHall, kReal };
 
     void prepare (double sampleRate)
     {
@@ -104,6 +106,16 @@ public:
         preS.prepare ((int) std::ceil (2.2 * fs));
         erLine.prepare ((int) std::ceil (0.12 * fs));
         erLineR.prepare ((int) std::ceil (0.12 * fs));
+        {
+            // per source, the three bands interleaved (one cache line per tap): the longest mixing time (51 ms) + headroom
+            int n = 1;
+            while (n < (int) std::ceil (0.07 * fs) + 4) n <<= 1;
+            for (auto& l : realBuf) l.assign ((size_t) n, Band4 {});
+            realMask = n - 1;
+            realW = 0;
+        }
+        realLo = std::exp (-2.0 * kPi2 * 400.0 / fs);
+        realHi = std::exp (-2.0 * kPi2 * 4000.0 / fs);
         for (auto& a : erDiff)
             a.line.prepare ((int) std::ceil (0.004 * fs));
         // smooth random modulation: per line, two incommensurate slow sines (rates 0.31 .. 1.37 Hz)
@@ -137,6 +149,9 @@ public:
         erLine.reset();
         erLineR.reset();
         for (auto& a : erDiff) a.line.reset();
+        for (auto& l : realBuf) std::fill (l.begin(), l.end(), Band4 {});
+        realW = 0;
+        realLp = {};
     }
 
     void configure (int type, float sizePct)
@@ -182,14 +197,80 @@ public:
         configured = true;
     }
 
+    // 4.0 REAL SPACES: a modelled room - its own early reflections (three-band taps) and a tail sized by its mean free path,
+    // decaying per band as the room does; no algorithmic early reflections, no onset burst, no type voicing
+    void configureReal (int roomIndex)
+    {
+        room = &real::kRoomList[std::clamp (roomIndex, 0, real::kRooms - 1)];
+        curType = kReal;
+        const double mfpMs = 1000.0 * room->mfp / 343.0;
+        const double lo = std::clamp (0.8 * mfpMs, 1.5, 40.0), hi = std::clamp (7.0 * mfpMs, 12.0, 185.0);
+        for (int i = 0; i < N; ++i)
+        {
+            const double ms = lo * std::pow (hi / lo, (double) i / (N - 1));
+            len[(size_t) i] = nearestPrime ((int) std::lround (ms * 0.001 * fs));
+            if (! configured)
+                curLen[(size_t) i] = len[(size_t) i];
+            loopAp[(size_t) i].d = nearestPrime (std::clamp ((int) std::lround (0.13 * len[(size_t) i]), (int) (0.0003 * fs) + 2, (int) (0.009 * fs)));
+            loopAp[(size_t) i].g = 0.55f;
+        }
+        static constexpr double dms[12] = { 1.531, 2.213, 3.595, 4.771, 6.317, 8.233, 1.693, 2.437, 3.271, 5.113, 6.871, 8.917 };
+        for (int k = 0; k < 12; ++k)
+        {
+            // the diffusers scale with the room (a booth's must not ring longer than the booth: 0.35 .. 1 x)
+            inAp[(size_t) k].d = std::max (1, (int) std::lround (dms[k] * 0.001 * fs * std::clamp (room->mfp / 3.4, 0.35, 1.0)));
+            inAp[(size_t) k].g = room->mfp < 2.0f ? 0.5f : 0.62f;
+        }
+        // the room's taps at this sample rate (delay in samples, gains per band); the tail starts halfway to the mixing time
+        for (int p = 0; p < 4; ++p)
+        {
+            realN[(size_t) p] = std::min (room->n[p], kMaxReal);
+            for (int k = 0; k < realN[(size_t) p]; ++k)
+            {
+                const auto& t = room->taps[p][k];
+                realD[(size_t) p][(size_t) k] = std::clamp ((int) std::lround (t.t * fs), 0, realMask - 4);
+                realG[(size_t) p][(size_t) k] = { t.gLow, t.gMid, t.gHigh };
+            }
+        }
+        lateDelay = (int) std::lround (0.5 * room->tMix * fs);
+        lateGain = (float) (0.25 * std::pow (10.0, room->lateDb / 20.0));
+        realLevel = (float) std::pow (10.0, room->levelDb / 20.0);
+        configured = true;
+    }
+    // the room's own decay per band (MODULATION and FREEZE as for the other types)
+    void setRealDecay (float modPct, bool freeze) noexcept
+    {
+        if (room != nullptr)
+            setDecayBands (room->rtMid, room->rtLow, room->rtHigh, modPct, freeze);
+    }
+    const real::Room* realRoom() const noexcept { return curType == kReal ? room : nullptr; }
+
     // RT60 at mid frequencies; BASS = the low RT as a multiple of it (0.5 .. 2); DAMPING (%) = the high RT shorter (0: as
     // the mids, 100: a fifth); MODULATION (%); FREEZE holds the tail (lossless, no input)
     void setDecay (float rt60, float bassMult, float dampingPct, float modPct, bool freeze) noexcept
     {
+        if (curType == kReal)
+            return;   // a modelled room decays as the room does (setRealDecay)
         frozen = freeze;
         const double rt = std::clamp ((double) rt60, 0.1, 30.0);
         const double rtLow = rt * std::clamp ((double) bassMult, 0.25, 4.0);
         const double rtHigh = rt / (1.0 + 1.5 * std::clamp ((double) dampingPct, 0.0, 100.0) / 100.0);   // 100 %: highs 2.5x faster
+        applyDecay (rt, rtLow, rtHigh, freeze);
+        modDepth = 0.0010 * fs * std::clamp ((double) modPct, 0.0, 100.0) / 100.0;   // up to 1 ms: smears modes, no audible pitch
+    }
+    void setDecayBands (double rtMid, double rtLowIn, double rtHighIn, float modPct, bool freeze) noexcept
+    {
+        frozen = freeze;
+        // the shortest decay the tank can hold for these lines: at least 3 trips round the longest loop (below it the
+        // loop gain falls under 0.1 and the tail would turn grainy) - a booth's 0.09 s needs short lines (configureReal)
+        const double rt = std::clamp (rtMid, 0.05, 30.0);
+        applyDecay (rt, std::clamp (rtLowIn, 0.05, 30.0), std::clamp (rtHighIn, 0.05, 30.0), freeze);
+        modDepth = 0.0010 * fs * std::clamp ((double) modPct, 0.0, 100.0) / 100.0;
+    }
+
+private:
+    void applyDecay (double rt, double rtLow, double rtHigh, bool freeze) noexcept
+    {
         for (int i = 0; i < N; ++i)
         {
             const double L = (double) len[(size_t) i] + (double) loopAp[(size_t) i].d;   // the loop's whole delay
@@ -199,15 +280,23 @@ public:
             lowSh[(size_t) i].lowShelf (fs, 350.0, gL / gM);   // first order: 125 Hz well inside the shelf
             highSh[(size_t) i].highShelf (fs, 5000.0, gH / gM);
         }
-        modDepth = 0.0010 * fs * std::clamp ((double) modPct, 0.0, 100.0) / 100.0;   // up to 1 ms: smears modes, no audible pitch
     }
+
+public:
 
     void setPreDelay (double samples) noexcept { preSamples = std::clamp ((int) std::lround (samples), 0, pre.mask - 8); }
     void setEarly (float pct) noexcept { earlyGain = curType == kPlate ? 0.0f : std::clamp (pct, 0.0f, 100.0f) / 100.0f; }
+    // REAL: EARLY scales the room's reflections (50 % = as the room makes them, 100 % = twice as loud)
+    float realEarly() const noexcept { return 2.0f * earlyGain; }
 
     // one stereo sample in (filtered), one stereo sample out (wet only)
     void process (float inL, float inR, float& outL, float& outR) noexcept
     {
+        if (curType == kReal)
+        {
+            processReal (inL, inR, outL, outR);
+            return;
+        }
         pre.push (0.5f * (inL + inR));
         preS.push (0.5f * (inL - inR));
         const float m = pre.tap (preSamples), sd = preS.tap (preSamples);
@@ -292,6 +381,102 @@ public:
     }
 
 private:
+    // REAL: the room's early reflections (three bands, two sources, two mics) + the tank fed from halfway to the mixing time
+    void processReal (float inL, float inR, float& outL, float& outR) noexcept
+    {
+        pre.push (0.5f * (inL + inR));
+        preS.push (0.5f * (inL - inR));
+        const float m = pre.tap (preSamples), sd = preS.tap (preSamples);
+        const float xL = m + sd, xR = m - sd;
+        // three bands per source (complementary first-order splits: low + mid + high = the input exactly)
+        float band[2][3];
+        const float src[2] = { xL, xR };
+        for (int c = 0; c < 2; ++c)
+        {
+            realLp[(size_t) c][0] = (float) (realLo * realLp[(size_t) c][0] + (1.0 - realLo) * src[c]);
+            realLp[(size_t) c][1] = (float) (realHi * realLp[(size_t) c][1] + (1.0 - realHi) * src[c]);
+            band[c][0] = realLp[(size_t) c][0];
+            band[c][1] = realLp[(size_t) c][1] - realLp[(size_t) c][0];
+            band[c][2] = src[c] - realLp[(size_t) c][1];
+            realBuf[(size_t) c][(size_t) realW] = { band[c][0], band[c][1], band[c][2], 0.0f };
+        }
+        const int w = realW;
+        realW = (realW + 1) & realMask;
+        float e[2] = { 0.0f, 0.0f };
+        for (int p = 0; p < 4; ++p)
+        {
+            const int s = p >> 1, mic = p & 1;
+            const Band4* buf = realBuf[(size_t) s].data();
+            const int* dd = realD[(size_t) p].data();
+            const auto* gg = realG[(size_t) p].data();
+            float a0 = 0.0f, a1 = 0.0f, a2 = 0.0f;
+            for (int k = 0; k < realN[(size_t) p]; ++k)
+            {
+                const Band4& v = buf[(w - dd[k]) & realMask];
+                a0 += gg[k][0] * v.b[0];
+                a1 += gg[k][1] * v.b[1];
+                a2 += gg[k][2] * v.b[2];
+            }
+            e[mic] += a0 + a1 + a2;
+        }
+        // the tank's input: from halfway to the mixing time on (the reflections before it are the room's own)
+        const int lt = std::min (preSamples + lateDelay, pre.mask - 4);
+        const float lm = pre.tap (lt), lsd = preS.tap (lt);
+        float dL = lm + lsd, dR = lm - lsd;
+        for (int k = 0; k < 6; ++k)
+        {
+            dL = inAp[(size_t) k].process (dL);
+            dR = inAp[(size_t) (k + 6)].process (dR);
+        }
+        if (++renorm >= 4096)
+        {
+            renorm = 0;
+            for (int i = 0; i < N; ++i)
+            {
+                const double a = 1.0 / std::sqrt (oc1[(size_t) i] * oc1[(size_t) i] + os1[(size_t) i] * os1[(size_t) i]);
+                const double b = 1.0 / std::sqrt (oc2[(size_t) i] * oc2[(size_t) i] + os2[(size_t) i] * os2[(size_t) i]);
+                oc1[(size_t) i] *= a; os1[(size_t) i] *= a; oc2[(size_t) i] *= b; os2[(size_t) i] *= b;
+            }
+        }
+        const float inGain = frozen ? 0.0f : 1.0f;
+        fadeIn += ((inGain) - fadeIn) * 0.0005f;
+        std::array<float, N> v {};
+        for (int i = 0; i < N; ++i)
+        {
+            {
+                const double c1 = oc1[(size_t) i], s1 = os1[(size_t) i], c2 = oc2[(size_t) i], s2 = os2[(size_t) i];
+                oc1[(size_t) i] = c1 * rc1[(size_t) i] - s1 * rs1[(size_t) i]; os1[(size_t) i] = s1 * rc1[(size_t) i] + c1 * rs1[(size_t) i];
+                oc2[(size_t) i] = c2 * rc2[(size_t) i] - s2 * rs2[(size_t) i]; os2[(size_t) i] = s2 * rc2[(size_t) i] + c2 * rs2[(size_t) i];
+            }
+            const double mod = modDepth * (0.6 * os1[(size_t) i] + 0.4 * os2[(size_t) i]);
+            curLen[(size_t) i] += 0.0005 * ((double) len[(size_t) i] - curLen[(size_t) i]);
+            v[(size_t) i] = lines[(size_t) i].read (std::max (1.0, curLen[(size_t) i] + mod - 1.0));
+        }
+        float lateL = 0.0f, lateR = 0.0f;
+        for (int i = 0; i < N; ++i)
+        {
+            const float wl = (i & 1) ? 0.6f : 1.0f, wr = (i & 1) ? 1.0f : 0.6f;
+            lateL += wl * ((((i >> 0) ^ (i >> 2) ^ (i >> 4)) & 1) ? -1.0f : 1.0f) * v[(size_t) i];
+            lateR += wr * ((((i >> 1) ^ (i >> 3) ^ (i >> 4)) & 1) ? -1.0f : 1.0f) * v[(size_t) i];
+        }
+        for (int i = 0; i < N; ++i)
+        {
+            float y = highSh[(size_t) i].process (lowSh[(size_t) i].process (v[(size_t) i] * gMid[(size_t) i]));
+            v[(size_t) i] = loopAp[(size_t) i].process (y);
+        }
+        hadamard (v);
+        const float nrm = 0.17677669529663687f;
+        for (int i = 0; i < N; ++i)
+        {
+            const float x = (i & 1) ? dR : dL;
+            const float sgn = ((i >> 1) & 1) ? -1.0f : 1.0f;
+            lines[(size_t) i].push (v[(size_t) i] * nrm + sgn * x * fadeIn * 0.25f);
+        }
+        const float er = realEarly();
+        outL = realLevel * (er * e[0] + lateGain * lateL);
+        outR = realLevel * (er * e[1] + lateGain * lateR);
+    }
+
     static void hadamard (std::array<float, N>& v) noexcept
     {
         for (int h = 1; h < N; h <<= 1)
@@ -358,7 +543,18 @@ private:
                 }
     }
 
-    static constexpr int kMaxEr = 128;
+    static constexpr int kMaxEr = 128, kMaxReal = 48;
+    const real::Room* room = nullptr;
+    struct alignas (16) Band4 { float b[4] {}; };
+    std::array<std::vector<Band4>, 2> realBuf;
+    int realMask = 0, realW = 0;
+    std::array<std::array<float, 2>, 2> realLp {};
+    std::array<int, 4> realN {};
+    std::array<std::array<int, kMaxReal>, 4> realD {};
+    std::array<std::array<std::array<float, 3>, kMaxReal>, 4> realG {};
+    double realLo = 0.95, realHi = 0.6;
+    int lateDelay = 0;
+    float realLevel = 1.0f;
     double fs = 48000.0, modDepth = 0.0;
     std::array<DLine, N> lines;
     std::array<AP, N> loopAp;

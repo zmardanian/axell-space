@@ -93,3 +93,31 @@ On the artist's vocal (one wet gain for all variants; masking = wet / voice in t
 combine (Unmasked Hall).
 Rejected: STFT processing (latency); per-band peak tracking at 3 dB/s (a quiet band became "active" at its own level);
 a 46 dB share window (a 1 kHz voice leaked into the 5 kHz detector at -45 dB).
+
+## S10 - 4.0: REAL SPACES and SHAPE
+**Rooms.** Eight shoeboxes with real dimensions and wall materials (pyroomacoustics' table, from Vorländer), computed
+offline (`research/real_spaces/`): the image sources up to Lindau's mixing time (20 V / S + 12 ms), the 96 strongest per
+path (two sources 0.6 m apart, two omni mics 0.4 m apart), gains per octave with air absorption collapsed to three bands
+(125 - 250 Hz, 500 Hz - 2 kHz, 4 - 8 kHz); at run time three complementary first-order bands per source (their sum is
+the input exactly) and sparse taps. The tail: the 2.0 tank with lines from 0.8 to 7 mean free paths, diffusers scaled to
+the room, its input from halfway to the mixing time, no algorithmic reflections, no onset burst, no type voicing.
+**The decay's target is Eyring's formula per octave**, not the hybrid simulation's T30: with mirror walls (no scattering)
+the simulation rang for 9 - 20 s in the club and the car park (sound bouncing sideways between hard walls above an
+absorbing floor); with realistic scattering (0.25) it agrees with Eyring within 10 - 30 %. Three rooms were furnished to
+real conditions after a first pass (bathroom: a shower curtain instead of glass; car park: its open side; live room:
+without its absorber). Calibration on our own output, four iterations: the tank's per-band decays (its first-order
+shelves blur neighbouring octaves - lows came out short, highs long), the late level against the simulation's early /
+late balance (C50; the tail was 14 - 21 dB too quiet at first) and the overall level against the 2.0 ROOM at the same
+decay (+-0.3 dB). CPU: 96 taps per path cost 2.6 % of a core over an algorithmic room (6.4 - 7.5 % with UNMASK); the
+48 strongest per path, after re-calibration, hold the physics even closer: T30 per band within 9 % of Eyring in seven
+rooms (the booth's 0.09 s mids come out 0.10 s: its diffusers ring that long even scaled down), C50 within 0.4 dB, level
+within 0.1 dB; independent audit at 1 kHz: -8 .. +4 %. The three band lines are interleaved (one cache line per tap).
+UNMASK's detectors and bell coefficients were laid out as arrays (several bands per instruction, the same arithmetic:
+3.0 sessions stay bit-identical): -7 .. -9 % CPU on the 3.0 presets. The early-pattern correlation with the simulation (1 ms bins)
+is 0.6 - 0.8 in six rooms and low in two (the bathroom keeps 96 of its 145 reflections; the car park's 12 are swamped by
+the simulation's scattered energy) - a weak measure, kept as information, not as a pass mark.
+**SHAPE.** GATED keys on the reverb's input (10 ms follower, 30 dB under its recent peak; a 50 ms follower held the
+gate open ~170 ms too long), hold = TIME, open in 2 ms, close in 15 ms. REVERSE: two read heads half a segment apart,
+each reading the previous segment backwards, sin^2 windows (sum = 1). A SHAPE change fades like a TYPE change.
+Rejected: a tempo-synced TIME (left for later: ms first, measured); convolution with downloaded room recordings (licences
+and size; the modelled rooms are our own data).

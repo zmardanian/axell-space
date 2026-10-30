@@ -15,7 +15,7 @@
 	name = Axell Space
 	category = Audio Module Class
 	subCategories = Fx|Reverb|Delay
-	version = 3.0.0
+	version = 4.0.0
 	sdkVersion = VST 3.8.0
 	cid = ABCDEF019182FAEB4178796253706331
 
@@ -23,7 +23,7 @@
 	name = Axell Space
 	category = Component Controller Class
 	subCategories = Fx|Reverb|Delay
-	version = 3.0.0
+	version = 4.0.0
 	sdkVersion = VST 3.8.0
 	cid = ABCDEF011234ABCD4178796253706331
 
@@ -59,7 +59,7 @@ Info:  => Event Buses: [0 In(s) => 0 Out(s)]
 
 [Scan Parameters]
 Info:  ===Scan Parameters ====================================
-Info:  This component exports 40 parameter(s)
+Info:  This component exports 43 parameter(s)
 Info:     Parameter 000 (id=1882965841): [title="Reverb"] [unit=""] [type = Toggle, default = 1.000000, unit = 0]
 Info:     Parameter 001 (id=3575610): [title="Reverb Type"] [unit=""] [type = Discrete, default = 0.666667, unit = 0]
 Info:     Parameter 002 (id=3530753): [title="Size"] [unit=""] [type = Float, default = 0.500000, unit = 0]
@@ -100,9 +100,12 @@ Info:     Parameter 034 (id=1762153012): [title="Delay Mode"] [unit=""] [type = 
 Info:     Parameter 035 (id=117919): [title="Wow & Flutter"] [unit=""] [type = Float, default = 0.400000, unit = 0]
 Info:     Parameter 036 (id=1659469666): [title="Delay Diffuse"] [unit=""] [type = Float, default = 0.000000, unit = 0]
 Info:     Parameter 037 (id=1307058437): [title="Unmask"] [unit=""] [type = Float, default = 0.000000, unit = 0]
-Info:     Parameter 038 (id=1652125811): [title="Bypass"] [unit=""] [type = Toggle, default = 0.000000, unit = 0]
-Info:     Parameter 039 (id=1886548852): [title="Program"] [unit=""] [type = Discrete, default = 0.000000, unit = 0]
-Info:  =>Parameter 039 (id=1886548852) is kIsProgramChange, but not a kIsList!
+Info:     Parameter 038 (id=109637894): [title="Real Space"] [unit=""] [type = Discrete, default = 0.000000, unit = 0]
+Info:     Parameter 039 (id=109399969): [title="Reverb Shape"] [unit=""] [type = Discrete, default = 0.000000, unit = 0]
+Info:     Parameter 040 (id=508190222): [title="Shape Time"] [unit=""] [type = Float, default = 0.500000, unit = 0]
+Info:     Parameter 041 (id=1652125811): [title="Bypass"] [unit=""] [type = Toggle, default = 0.000000, unit = 0]
+Info:     Parameter 042 (id=1886548852): [title="Program"] [unit=""] [type = Discrete, default = 0.000000, unit = 0]
+Info:  =>Parameter 042 (id=1886548852) is kIsProgramChange, but not a kIsList!
 [Succeeded]
 
 [MIDI Mapping]
@@ -122,7 +125,7 @@ Info:     Unit000 (ID = 0): "Root Unit" (parent ID = -1, programlist ID = 188654
 
 [Scan Programs]
 Info:  ===Scan Programs ====================================
-Info:  Programlist 000 (id=1886548852):  "Factory Presets" (17 programs).
+Info:  Programlist 000 (id=1886548852):  "Factory Presets" (26 programs).
 Info:  Programlist 000->Program 000: "Init"
 Info:  Programlist 000->Program 001: "Vocal Plate"
 Info:  Programlist 000->Program 002: "Booth Air"
@@ -140,6 +143,15 @@ Info:  Programlist 000->Program 013: "Tape Echo"
 Info:  Programlist 000->Program 014: "Analog Dub"
 Info:  Programlist 000->Program 015: "Diffuse Trail"
 Info:  Programlist 000->Program 016: "Unmasked Hall"
+Info:  Programlist 000->Program 017: "Real: Vocal Booth"
+Info:  Programlist 000->Program 018: "Real: Tiled Bathroom"
+Info:  Programlist 000->Program 019: "Real: Studio Live Room"
+Info:  Programlist 000->Program 020: "Real: Concrete Stairwell"
+Info:  Programlist 000->Program 021: "Real: Small Club"
+Info:  Programlist 000->Program 022: "Real: Wood Chapel"
+Info:  Programlist 000->Program 023: "Real: Car Park"
+Info:  Programlist 000->Program 024: "Gated Hall"
+Info:  Programlist 000->Program 025: "Reverse Swell"
 [Succeeded]
 
 [Terminate/Initialize]

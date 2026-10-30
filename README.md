@@ -5,7 +5,9 @@
 The space of the Axell suite: a reverb and a tempo-synced delay, made for vocals.
 - **REVERB**: BOOTH, ROOM, PLATE and HALL from a 32-line, true-stereo feedback delay network with diffusion inside
   every loop, three-band decay and early reflections modelled on a real room's geometry. Dense from the first
-  milliseconds, a smooth tail without metallic ringing, decay times that are what the knob says.
+  milliseconds, a smooth tail without metallic ringing, decay times that are what the knob says. **REAL SPACES** (4.0):
+  eight real rooms modelled from their size and walls - booth, bathroom, living room, live room, stairwell, club, chapel,
+  car park - held to their physics. **SHAPE**: natural, gated or reversed tails.
 - **DELAY**: synced to the song (1/16 to 1/1, triplets and dotted) or free in milliseconds, exact to the sample;
   CLEAN, TAPE or ANALOG repeats, wow and flutter, diffusion, feedback, ping-pong, filters, drive, and a send of the
   repeats into the reverb.
@@ -40,6 +42,10 @@ More screens: [1/4 throw](docs/screenshots/space-throw.png), [ad-lib tail](docs/
   keeps any pitch wobble under about 7 cents), **LOW CUT** / **HIGH CUT** before the reverb, **WIDTH** (0-200 %),
   **LEVEL**.
 
+- **REAL SPACE** (4.0): a modelled room instead of the TYPE's algorithm: its own early reflections (true stereo) and a
+  tail decaying per band as the room does; it sets DECAY and SIZE (they step aside). **SHAPE** (4.0): NATURAL, GATED
+  (open while you rap and for TIME after, then shut) or REVERSE (the tail backwards in segments of TIME: a swell).
+
 **DELAY**
 - **MODE** (3.0): **CLEAN** (exact repeats), **TAPE** (soft record-head saturation, a head bump, each pass darker, the
   tape's wow and flutter) or **ANALOG** (a dark bucket-brigade line, soft clipping); **WOW** (how much the tape moves:
@@ -59,8 +65,8 @@ More screens: [1/4 throw](docs/screenshots/space-throw.png), [ad-lib tail](docs/
 **OUTPUT**
 - **MIX**: up to 50 % the voice stays at full level and the effects come in; above 50 % the voice goes down; 100 % =
   wet only, for a send / aux track. At 0 % the output is the input, bit for bit.
-- **OUTPUT** level, IN / OUT meters, 17 factory presets (vocal plates, booth, rooms, halls, tape slap and echo, throws,
-  ping-pong, analog dub, diffuse trail, ad-lib tails and two 100 %-wet send presets), A/B.
+- **OUTPUT** level, IN / OUT meters, 26 factory presets (vocal plates, booth, rooms, halls, seven real rooms, gated hall, reverse
+  swell, tape slap and echo, throws, ping-pong, analog dub, diffuse trail, ad-lib tails and two 100 %-wet sends), A/B.
 
 Switching the reverb or the delay off lets its tail ring out; changing the type cross-fades; host bypass cross-fades
 over 10 ms and is then the input, bit for bit.
@@ -95,26 +101,31 @@ repeats on the beat within 0.3 ms with DIFFUSE; wow at 40 % 1.5 cents rms.
 in the bands the voice leaves free); added to the vocal presets (40 %): the voice 3.3 dB less covered and the consonants
 clearer, for 1.5-2 dB less space. No zipper: artefacts at least 106 dB down.
 
+**REAL SPACES** (independent audit, through a real host): the decay at 1 kHz of every room within 8 % of the room's
+physics (Eyring's formula from its size and walls): booth 0.083 s (0.09), bathroom 0.85 (0.90), living room 0.32 (0.31),
+live room 1.14 (1.23), stairwell 2.91 (3.07), club 0.83 (0.90), chapel 2.16 (2.19), car park 2.89 (2.92). The balance of
+early and late energy within 0.4 dB of a full room simulation; the first reflection on time to 0.01 ms.
+
 **ESS DUCK** (independent synthetic voice, 44.1-96 kHz): esses in the effects -12.0 dB at AMOUNT 12 dB, no vowel
 changed (0.00 dB). On the artist's own dry vocal: 85 % of the ess moments turned down by more than 6 dB (median
 -12 dB), no vowel touched.
 
 **VOICE DUCK** 12 dB: the reverb -11.8 dB while the voice sounds, back within 0.7 dB in the pauses.
 
-**CPU**: 4.6-5.4 % of one core with UNMASK on (stereo, 48 kHz, 128-sample blocks, Vocal Plate / Hall Hook / Ad-lib Tail
-presets); UNMASK at 0 % costs nothing.
+**CPU**: 4.25-5.0 % of one core with UNMASK on (stereo, 48 kHz, 128-sample blocks, Vocal Plate / Hall Hook / Ad-lib Tail
+presets), a real room 5.6-5.7 %; UNMASK at 0 % costs nothing.
 No memory allocation while processing.
 
-**Verified for 3.0.0**: DSP suite 265 checks, plugin suite 34, ASan + UBSan clean, independent audit 80/80,
+**Verified for 4.0.0**: DSP suite 400 checks, plugin suite 34, ASan + UBSan clean, independent audit 91/91,
 pluginval strictness 10, Steinberg's VST3 validator 47/47.
 
 ## Install (Linux)
 
-Download `AxellSpace-3.0.0-linux-x86_64.tar.gz` from the
+Download `AxellSpace-4.0.0-linux-x86_64.tar.gz` from the
 [latest release](https://github.com/zmardanian/axell-space/releases/latest) (optional: `sha256sum -c SHA256SUMS.txt`), then:
 
-    tar xzf AxellSpace-3.0.0-linux-x86_64.tar.gz
-    cd AxellSpace-3.0.0-linux-x86_64
+    tar xzf AxellSpace-4.0.0-linux-x86_64.tar.gz
+    cd AxellSpace-4.0.0-linux-x86_64
     ./install.sh
 
 Then in REAPER: Options > Preferences > Plug-ins > VST > Re-scan. On a vocal track use MIX 15-30 %; on a send / aux
