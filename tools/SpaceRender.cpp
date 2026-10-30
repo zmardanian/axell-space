@@ -44,6 +44,11 @@ static void setKey (axs::Params& p, const std::string& k, double v, int& block)
     else if (k == "mix") p.mix = (float) v;
     else if (k == "output") p.outputDb = (float) v;
     else if (k == "bpm") p.bpm = v;
+    else if (k == "engine") p.engine = (int) v;
+    else if (k == "bass") p.bass = (float) v;
+    else if (k == "freeze") p.freeze = v != 0;
+    else if (k == "presync") p.preSync = v != 0;
+    else if (k == "prenote") p.preNote = (int) v;
     else if (k == "block") block = (int) v;
     else std::fprintf (stderr, "unknown key %s\n", k.c_str());
 }

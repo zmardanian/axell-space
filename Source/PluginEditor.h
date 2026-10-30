@@ -59,7 +59,10 @@ private:
     ui::Knob size { "SIZE", ui::col::teal }, decay { "DECAY", ui::col::teal }, preDelay { "PRE-DELAY", ui::col::teal },
              damping { "DAMPING", ui::col::teal }, early { "EARLY", ui::col::teal }, modulation { "MOD", ui::col::teal },
              revLow { "LOW CUT", ui::col::teal }, revHigh { "HIGH CUT", ui::col::teal }, width { "WIDTH", ui::col::teal },
-             revLevel { "LEVEL", ui::col::teal };
+             revLevel { "LEVEL", ui::col::teal }, bass { "BASS", ui::col::teal };
+    // 2.0
+    ui::Toggle freeze { "FREEZE", ui::col::teal, "pill" }, preSync { "PRE SYNC", ui::col::teal, "pill" };
+    ui::Choice preNote, engine;
     // DELAY
     ui::Toggle delayOn { "DELAY", ui::col::accent, "power" };
     ui::Toggle sync { "SYNC", ui::col::accent, "pill" }, pingPong { "PING-PONG", ui::col::accent, "pill" };

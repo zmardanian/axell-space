@@ -142,8 +142,40 @@ static size_t onset (const std::vector<float>& x)
     return 0;
 }
 // normalised echo density (Abel & Huang): 1 = Gaussian-dense; returns ms from the onset until it first reaches 0.9
-static double densityMs (const std::vector<float>& x0, double fs)
+static double densityMs (const std::vector<float>& xin, double fsIn)
 {
+    // echo density as heard: above 48 kHz the response is first band-limited to 20 kHz and decimated to <= 48 kHz (at
+    // 96 kHz a soft-topped tail is a smoother waveform and crosses its RMS less often - the same sound, a lower count)
+    std::vector<float> x0 = xin;
+    double fs = fsIn;
+    const int dec = fsIn > 50000.0 ? (int) std::lround (fsIn / 48000.0) : 1;
+    if (dec > 1)
+    {
+        const int taps = 127;
+        std::vector<double> h ((size_t) taps);
+        const double fc = 20000.0 / fsIn;
+        double sum = 0;
+        for (int k = 0; k < taps; ++k)
+        {
+            const double m = k - (taps - 1) / 2.0;
+            const double sinc = m == 0 ? 2.0 * fc : std::sin (2.0 * kPi * fc * m) / (kPi * m);
+            h[(size_t) k] = sinc * (0.42 - 0.5 * std::cos (2.0 * kPi * k / (taps - 1)) + 0.08 * std::cos (4.0 * kPi * k / (taps - 1)));
+            sum += h[(size_t) k];
+        }
+        std::vector<float> y (xin.size() / (size_t) dec);
+        for (size_t i = 0; i < y.size(); ++i)
+        {
+            double acc = 0;
+            for (int k = 0; k < taps; ++k)
+            {
+                const long j = (long) (i * (size_t) dec) - k + (taps - 1) / 2;
+                if (j >= 0 && (size_t) j < xin.size()) acc += h[(size_t) k] * xin[(size_t) j];
+            }
+            y[i] = (float) (acc / sum);
+        }
+        x0 = y;
+        fs = fsIn / dec;
+    }
     const size_t o = onset (x0);
     const int w = (int) (0.02 * fs), hop = w / 4;
     for (size_t i = o; i + (size_t) w < x0.size(); i += (size_t) hop)
@@ -181,9 +213,9 @@ static double iacc (const Buf& y, double fs, double t0, double t1)
     return best;
 }
 
-static void testReverb (double fs, bool quick)
+static void testReverb (double fs, bool quick, int engine)
 {
-    const std::string R = rateName (fs);
+    const std::string R = rateName (fs) + (engine == 1 ? " [1.0 core]" : " [2.0 core]");
     const char* names[4] = { "BOOTH", "ROOM", "PLATE", "HALL" };
     for (int t = 0; t < 4; ++t)
         for (double dec : { 0.5, 1.5, 4.0 })
@@ -191,6 +223,7 @@ static void testReverb (double fs, bool quick)
             if (quick && dec == 4.0)
                 continue;
             Params p = wetOnly (Params {});
+            p.engine = engine;
             p.type = t; p.decay = (float) dec; p.preDelayMs = 0.0f; p.damping = 0.0f;
             const auto y = render (fs, p, impulse (fs, dec * 1.6 + 0.6));
             std::vector<float> m (y[0].size());
@@ -210,6 +243,7 @@ static void testReverb (double fs, bool quick)
     // DAMPING: the highs decay faster
     {
         Params p = wetOnly (Params {});
+        p.engine = engine;
         p.type = kPlate; p.decay = 2.0f; p.damping = 100.0f; p.preDelayMs = 0.0f;
         const auto y = render (fs, p, impulse (fs, 4.0));
         std::vector<float> m (y[0].size());
@@ -219,6 +253,7 @@ static void testReverb (double fs, bool quick)
     // PRE-DELAY: the wet path starts look-ahead + pre-delay after the input
     {
         Params p = wetOnly (Params {});
+        p.engine = engine;
         p.type = kPlate; p.preDelayMs = 50.0f;
         Engine e;
         e.prepare (fs);
@@ -227,6 +262,69 @@ static void testReverb (double fs, bool quick)
         const double expect = 50.0 + 1000.0 * e.lookAheadSamples() / fs;
         // never before look-ahead + PRE-DELAY; the PLATE's first echo comes one (shortest) tank line later
         check ("PRE-DELAY 50 ms: the reverb starts after look-ahead + 50 ms (re that)" + R, first - expect, 0.0, 12.0, "ms");
+    }
+}
+
+// 2.0: BASS, FREEZE, true stereo, PRE-DELAY in note values
+static void testReverb2 (double fs)
+{
+    const std::string R = rateName (fs);
+    auto mono = [] (const Buf& y) { std::vector<float> m (y[0].size()); for (size_t i = 0; i < m.size(); ++i) m[i] = 0.5f * (y[0][i] + y[1][i]); return m; };
+    for (float bass : { 200.0f, 50.0f })
+    {
+        Params p = wetOnly (Params {});
+        p.type = kHall; p.decay = 1.5f; p.damping = 0.0f; p.preDelayMs = 0.0f; p.bass = bass;
+        const auto m = mono (render (fs, p, impulse (fs, 1.5 * 2.0 * 1.6 + 0.6)));
+        const double r = rt60 (m, fs, 125) / rt60 (m, fs, 1000);
+        check (std::string ("BASS ") + (bass > 100 ? "200" : "50") + " %: RT60 at 125 Hz re 1 kHz" + R, r, bass > 100 ? 1.6 : 0.4, bass > 100 ? 2.4 : 0.65, "x");
+    }
+    // FREEZE: the tail holds (no decay) and takes no new input
+    {
+        Params p = wetOnly (Params {});
+        p.type = kHall; p.decay = 1.0f; p.preDelayMs = 0.0f;
+        Engine e;
+        e.setParams (p);
+        e.prepare (fs);
+        e.setParams (p);
+        Buf x = impulse (fs, 7.0);
+        const size_t n = x[0].size();
+        Buf y (2, std::vector<float> (n));
+        for (size_t pos = 0; pos < n; pos += 256)
+        {
+            const int m = (int) std::min<size_t> (256, n - pos);
+            if (pos >= (size_t) (0.4 * fs) && ! p.freeze) { p.freeze = true; e.setParams (p); }
+            if (pos >= (size_t) (2.0 * fs) && pos < (size_t) (2.0 * fs) + 256) { x[0][pos] = x[1][pos] = 1.0f; }   // a click while frozen
+            float* io[2] = { x[0].data() + pos, x[1].data() + pos };
+            e.process (io, 2, m);
+            for (int c = 0; c < 2; ++c) std::copy (io[c], io[c] + m, y[(size_t) c].begin() + (long) pos);
+        }
+        auto energy = [&] (double a, double b) { double s = 0; for (size_t i = (size_t) (a * fs); i < (size_t) (b * fs); ++i) s += (double) y[0][i] * y[0][i] + (double) y[1][i] * y[1][i]; return 10.0 * std::log10 (s / ((b - a) * fs) + 1e-30); };
+        check ("FREEZE: the tail holds (energy 5.5 - 6.5 s re 1.0 - 1.5 s)" + R, energy (5.5, 6.5) - energy (1.0, 1.5), -1.0, 1.0, "dB");
+        check ("FREEZE: a click while frozen does not enter (energy 2.1 - 2.6 s re 1.0 - 1.5 s)" + R, energy (2.1, 2.6) - energy (1.0, 1.5), -1.0, 1.0, "dB");
+    }
+    // true stereo: a source on the left gives a left-weighted reverb onset; left- and right-only sources give different tails
+    {
+        Params p = wetOnly (Params {});
+        p.type = kPlate; p.decay = 1.5f; p.preDelayMs = 0.0f; p.width = 100.0f;
+        Buf xl = impulse (fs, 2.0), xr = xl;
+        for (auto& v : xl[1]) v = 0.0f;
+        for (auto& v : xr[0]) v = 0.0f;
+        const auto yl = render (fs, p, xl), yr = render (fs, p, xr);
+        auto e = [&] (const std::vector<float>& v, double a, double b) { double s = 0; for (size_t i = (size_t) (a * fs); i < (size_t) (b * fs); ++i) s += (double) v[i] * v[i]; return s; };
+        check ("TRUE STEREO: a hard-left source - the reverb's first 60 ms, left re right" + R, 10.0 * std::log10 (e (yl[0], 0.0, 0.07) / e (yl[0 + 1], 0.0, 0.07)), 2.0, 40.0, "dB");
+        double c = 0, a = 0, b = 0;
+        for (size_t i = (size_t) (0.05 * fs); i < (size_t) (1.0 * fs); ++i) { c += (double) yl[0][i] * yr[0][i]; a += (double) yl[0][i] * yl[0][i]; b += (double) yr[0][i] * yr[0][i]; }
+        check ("TRUE STEREO: left-only vs right-only sources, the tails' correlation (left output)" + R, std::abs (c) / std::sqrt (a * b), 0.0, 0.3, "");
+    }
+    // PRE-DELAY SYNC: 1/8 at 120 BPM = 250 ms after the look-ahead
+    {
+        Params p = wetOnly (Params {});
+        p.type = kHall; p.preSync = true; p.preNote = k1_8; p.bpm = 120.0;
+        Engine e;
+        e.prepare (fs);
+        const auto y = render (fs, p, impulse (fs, 0.6));
+        const double first = (double) onset (y[0]) / fs * 1000.0 - 1000.0 * e.lookAheadSamples() / fs;
+        check ("PRE-DELAY SYNC 1/8 at 120 BPM: the reverb starts 250 ms after the look-ahead (re that)" + R, first - 250.0, 0.0, 12.0, "ms");
     }
 }
 
@@ -472,7 +570,9 @@ int main (int argc, char** argv)
     const auto t0 = std::chrono::steady_clock::now();
     for (double fs : quick ? std::vector<double> { 48000.0 } : std::vector<double> { 44100.0, 48000.0, 96000.0 })
     {
-        testReverb (fs, quick);
+        testReverb (fs, quick, 2);
+        testReverb (fs, quick, 1);
+        testReverb2 (fs);
         testDelay (fs);
         testDucking (fs);
         testSafety (fs);

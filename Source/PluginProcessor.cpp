@@ -62,6 +62,12 @@ APVTS::ParameterLayout SpaceProcessor::createLayout()
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "duckRelease", 1 }, "Duck Release", skewed (50.0f, 2000.0f, 1.0f, 300.0f), d.duckReleaseMs, fmt (msText)));
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "mix", 1 }, "Mix", NormalisableRange<float> (0.0f, 100.0f, 0.1f), d.mix, fmt (pctText)));
     p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "output", 1 }, "Output", NormalisableRange<float> (-24.0f, 12.0f, 0.1f), d.outputDb, fmt (dbText)));
+    // 2.0 (appended): the reverb core, BASS, FREEZE, PRE-DELAY in note values
+    p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { "engine", 2 }, "Reverb Engine", StringArray { "1.0 (classic)", "2.0" }, d.engine - 1));
+    p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "bass", 2 }, "Bass Decay", NormalisableRange<float> (50.0f, 200.0f, 0.1f), d.bass, fmt (pctText)));
+    p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "freeze", 2 }, "Freeze", d.freeze));
+    p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "preSync", 2 }, "Pre-Delay Sync", d.preSync));
+    p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { "preNote", 2 }, "Pre-Delay Note", kNotes, d.preNote));
     return { p.begin(), p.end() };
 }
 
@@ -106,6 +112,11 @@ axs::Params SpaceProcessor::readParams() const
     p.duckReleaseMs = v ("duckRelease");
     p.mix = v ("mix");
     p.outputDb = v ("output");
+    p.engine = juce::roundToInt (v ("engine")) + 1;
+    p.bass = v ("bass");
+    p.freeze = v ("freeze") > 0.5f;
+    p.preSync = v ("preSync") > 0.5f;
+    p.preNote = juce::roundToInt (v ("preNote"));
     p.bpm = bpm.load();
     return p;
 }
@@ -145,6 +156,10 @@ void SpaceProcessor::writeParams (const axs::Params& p)
     set ("duckRelease", p.duckReleaseMs);
     set ("mix", p.mix);
     set ("output", p.outputDb);
+    set ("engine", (float) (p.engine - 1));
+    set ("bass", p.bass);
+    set ("preSync", p.preSync ? 1.0f : 0.0f);
+    set ("preNote", (float) p.preNote);
 }
 
 bool SpaceProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -274,8 +289,17 @@ juce::ValueTree SpaceProcessor::stateWithName()
 }
 
 // APVTS::replaceState skips a parameter whose snapped value already matches; re-apply explicitly (pluginval scenario)
-void SpaceProcessor::restoreTree (const juce::ValueTree& tree)
+void SpaceProcessor::restoreTree (const juce::ValueTree& source)
 {
+    // a state saved before 2.0 has no "engine": it keeps the 1.0 reverb, so the session sounds exactly as it did
+    auto tree = source.createCopy();
+    if (! tree.getChildWithProperty ("id", "engine").isValid())
+    {
+        juce::ValueTree e ("PARAM");
+        e.setProperty ("id", "engine", nullptr);
+        e.setProperty ("value", 0.0f, nullptr);
+        tree.appendChild (e, nullptr);
+    }
     apvts.replaceState (tree);
     for (auto* p : getParameters())
         if (auto* rp = dynamic_cast<juce::RangedAudioParameter*> (p))

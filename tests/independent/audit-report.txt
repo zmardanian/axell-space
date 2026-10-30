@@ -8,42 +8,42 @@ PASS  silence in -> silence out, every reverb type with the delay on @ 96000: pe
 PASS  MIX 0 %: output = input, sample for sample @ 96000: max error 0
 PASS  host bypass: output = input, sample for sample @ 96000: max error 0
 PASS  blocks of 512 vs random 1-4096 samples: the same output (reverb + delay + ducking): max difference 0
-PASS  mono track (1 in / 1 out), 700-sample blocks: finite, the effect present: peak 0.197
-PASS  Booth, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.621 s (+3.5 %)
-PASS  Booth, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 1.964 s (-1.8 %)
-PASS  Booth: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 10 ms (limit 50)
-PASS  Booth: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.052 (limit 0.3)
-PASS  Booth, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 4.989 s (-0.2 %)
-PASS  Room, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.619 s (+3.2 %)
-PASS  Room, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 1.992 s (-0.4 %)
+PASS  mono track (1 in / 1 out), 700-sample blocks: finite, the effect present: peak 0.204
+PASS  Booth, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.593 s (-1.1 %)
+PASS  Booth, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 1.965 s (-1.7 %)
+PASS  Booth: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 15 ms (limit 50)
+PASS  Booth: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.033 (limit 0.3)
+PASS  Booth, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 4.937 s (-1.3 %)
+PASS  Room, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.592 s (-1.4 %)
+PASS  Room, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 1.945 s (-2.8 %)
 PASS  Room: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 10 ms (limit 50)
-PASS  Room: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.034 (limit 0.3)
-PASS  Room, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 4.957 s (-0.9 %)
-PASS  Plate, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.613 s (+2.1 %)
-PASS  Plate, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 1.984 s (-0.8 %)
+PASS  Room: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.043 (limit 0.3)
+PASS  Room, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 5.012 s (+0.2 %)
+PASS  Plate, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.593 s (-1.1 %)
+PASS  Plate, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 2.011 s (+0.6 %)
 PASS  Plate: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 15 ms (limit 50)
-PASS  Plate: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.029 (limit 0.3)
-PASS  Plate, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 4.979 s (-0.4 %)
-PASS  Hall, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.610 s (+1.6 %)
-PASS  Hall, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 2.008 s (+0.4 %)
-PASS  Hall: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 20 ms (limit 50)
-PASS  Hall: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.026 (limit 0.3)
-PASS  Hall, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 5.004 s (+0.1 %)
-PASS  Booth, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 2.047 s (+2.3 %)
-PASS  Booth: echo density reaches 0.9 (Gaussian) after the first sound @ 96000: 10 ms (limit 50)
-PASS  Booth: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.040 (limit 0.3)
-PASS  Room, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 1.986 s (-0.7 %)
+PASS  Plate: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.027 (limit 0.3)
+PASS  Plate, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 5.058 s (+1.2 %)
+PASS  Hall, DECAY 0.6 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 0.590 s (-1.6 %)
+PASS  Hall, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 2.035 s (+1.8 %)
+PASS  Hall: echo density reaches 0.9 (Gaussian) after the first sound @ 48000: 15 ms (limit 50)
+PASS  Hall: interaural cross-correlation of the tail, 0.1-1 s @ 48000: IACC 0.031 (limit 0.3)
+PASS  Hall, DECAY 5.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 48000: 5.003 s (+0.1 %)
+PASS  Booth, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 1.986 s (-0.7 %)
+PASS  Booth: echo density reaches 0.9 (Gaussian) after the first sound @ 96000: 15 ms (limit 50)
+PASS  Booth: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.025 (limit 0.3)
+PASS  Room, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 2.002 s (+0.1 %)
 PASS  Room: echo density reaches 0.9 (Gaussian) after the first sound @ 96000: 10 ms (limit 50)
-PASS  Room: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.034 (limit 0.3)
-PASS  Plate, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 1.991 s (-0.5 %)
+PASS  Room: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.026 (limit 0.3)
+PASS  Plate, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 2.002 s (+0.1 %)
 PASS  Plate: echo density reaches 0.9 (Gaussian) after the first sound @ 96000: 20 ms (limit 50)
-PASS  Plate: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.027 (limit 0.3)
-PASS  Hall, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 2.009 s (+0.5 %)
+PASS  Plate: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.038 (limit 0.3)
+PASS  Hall, DECAY 2.0 s: measured T30 (octaves 500 Hz - 2 kHz) @ 96000: 2.031 s (+1.5 %)
 PASS  Hall: echo density reaches 0.9 (Gaussian) after the first sound @ 96000: 25 ms (limit 50)
-PASS  Hall: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.019 (limit 0.3)
-PASS  DAMPING 100 %: the 8 kHz decay re the 1 kHz decay @ 44100: 0.57 x (0.5 by design)
-PASS  DAMPING 100 %: the 8 kHz decay re the 1 kHz decay @ 96000: 0.59 x (0.5 by design)
-PASS  PRE-DELAY 80 ms: the reverb starts 80 ms later than at 0 ms: 80.06 ms
+PASS  Hall: interaural cross-correlation of the tail, 0.1-1 s @ 96000: IACC 0.027 (limit 0.3)
+PASS  DAMPING 100 %: the 8 kHz decay re the 1 kHz decay @ 44100: 0.50 x (0.5 by design)
+PASS  DAMPING 100 %: the 8 kHz decay re the 1 kHz decay @ 96000: 0.54 x (0.5 by design)
+PASS  PRE-DELAY 80 ms: the reverb starts 80 ms later than at 0 ms: 80.00 ms
 PASS  DELAY 300 ms: repeats at 300 / 600 / 900 ms (largest error) @ 44100: 0.023 ms
 PASS  FEEDBACK 50 %: the 2nd repeat re the 1st (1 kHz burst) @ 44100: -6.02 dB (-6.02 expected)
 PASS  PING-PONG: repeats alternate left / right (L re R at 180 / 360 ms) @ 44100: 238 / -175 dB
@@ -66,6 +66,11 @@ PASS  VOICE DUCK 12 dB: the reverb while the voice sounds (re off): -11.8 dB
 PASS  VOICE DUCK: the reverb in the pauses (re off) - it blooms back: -0.7 dB
 PASS  all 13 factory presets: finite, peak at most +6 dB over the input's: ok
 PASS  every preset sounds different from Init: ok
-PASS  every factory preset renders bit-identically to the previous release (AxellSpace-1.0.0-linux-x86_64): max difference 0
+PASS  every factory preset with the 1.0 core renders bit-identically to the previous release (AxellSpace-1.0.1-linux-x86_64): max difference 0
+PASS  2.0 Booth: the tail's colour (metallic peaks; noise-like ~8.4): 9.96 dB (1.0 core: 10.28)
+PASS  2.0 Room: the tail's colour (metallic peaks; noise-like ~8.4): 9.88 dB (1.0 core: 9.90)
+PASS  2.0 Plate: the tail's colour (metallic peaks; noise-like ~8.4): 9.23 dB (1.0 core: 10.10)
+PASS  2.0 Hall: the tail's colour (metallic peaks; noise-like ~8.4): 8.90 dB (1.0 core: 9.43)
+PASS  2.0: no more colour than 1.0 in any type, less in PLATE / HALL / BOOTH (8-impulse means): Booth -0.32 Room -0.02 Plate -0.87 Hall -0.53
 
-ALL PASS: 69 of 69 independent checks passed (16 s)
+ALL PASS: 74 of 74 independent checks passed (26 s)

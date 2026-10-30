@@ -32,6 +32,8 @@
  #define AXS_FTZ 1
 #endif
 
+#include "ReverbV2.h"
+
 namespace axs
 {
 constexpr double kPi = 3.14159265358979323846;
@@ -59,6 +61,12 @@ struct Params
     float revHighCut = 12000.0f; // Hz, into the reverb
     float width = 100.0f;        // %
     float reverbDb = 0.0f;       // level of the reverb in the wet mix
+    // 2.0
+    int engine = 2;              // 1: the 1.0 reverb (sessions saved before 2.0 keep it, bit for bit); 2: the 2.0 core
+    float bass = 100.0f;         // % : the low decay (below ~250 Hz) re DECAY, 50 .. 200 (2.0 core)
+    bool freeze = false;         // hold the tail forever, no new input (2.0 core)
+    bool preSync = false;        // PRE-DELAY in note values of the host tempo
+    int preNote = 0;             // k1_16 .. (the delay's note list)
     // DELAY
     bool delayOn = false;
     bool sync = true;
@@ -497,6 +505,7 @@ public:
         for (auto& l : lookLine)
             l.prepare (look + 8);
         rev.prepare (fs);
+        rev2.prepare (fs);
         dly.prepare (fs);
         prepared = true;
         reset();
@@ -508,6 +517,7 @@ public:
         for (auto& l : lookLine)
             l.reset();
         rev.reset();
+        rev2.reset();
         dly.reset();
         ess.reset();
         for (auto& f : revLc)
@@ -591,7 +601,10 @@ public:
                 const float send = params.delayToReverb * 0.01f;
                 float iL = params.reverbOn ? revHc[0].process (revLc[0].process (wL + send * dL)) : 0.0f;
                 float iR = params.reverbOn ? revHc[1].process (revLc[1].process (wR + send * dR)) : 0.0f;
-                rev.process (iL, iR, rL, rR);
+                if (activeEngine == 2)
+                    rev2.process (iL, iR, rL, rR);   // true stereo
+                else
+                    rev.process (iL, iR, rL, rR);
                 rL *= typeFade;
                 rR *= typeFade;
             }
@@ -629,9 +642,14 @@ public:
                 {
                     typeFade = 0.0f;
                     rev.reset();
+                    rev2.reset();
+                    activeEngine = params.engine == 1 ? 1 : 2;
                     rev.configure (pendingType, params.size);
                     rev.setDecay (params.decay, params.damping, params.modulation);
                     rev.setEarly (params.early);
+                    rev2.configure (pendingType, params.size);
+                    rev2.setDecay (params.decay, params.bass / 100.0f, params.damping, params.modulation, params.freeze);
+                    rev2.setEarly (params.early);
                     pendingType = -1;
                 }
             }
@@ -652,26 +670,35 @@ private:
 
     void apply (const Params& p, bool force) noexcept
     {
-        if (force || p.type != lastType)
+        const int eng = p.engine == 1 ? 1 : 2;
+        if (force || p.type != lastType || eng != activeEngine)
         {
             if (force)
             {
                 rev.configure (p.type, p.size);
+                rev2.configure (p.type, p.size);
+                activeEngine = eng;
                 typeFade = 1.0f;
             }
             else
-                pendingType = p.type;
+                pendingType = p.type;   // TYPE or ENGINE: fade out, rebuild, fade in
             lastType = p.type;
             lastSize = p.size;
         }
         else if (std::abs (p.size - lastSize) > 1.0e-4f)
         {
-            rev.configure (p.type, p.size);   // the line lengths glide to the new size
+            rev.configure (p.type, p.size);   // the line lengths glide to the new size (1.0)
+            rev2.configure (p.type, p.size);
             lastSize = p.size;
         }
         rev.setDecay (p.decay, p.damping, p.modulation);
         rev.setPreDelay (p.preDelayMs);
         rev.setEarly (p.early);
+        rev2.setDecay (p.decay, p.bass / 100.0f, p.damping, p.modulation, p.freeze);
+        rev2.setEarly (p.early);
+        // PRE-DELAY: ms, or a note value of the host tempo (2.0 core)
+        const double preSec = p.preSync ? noteBeats (p.preNote) * 60.0 / std::clamp (p.bpm, 20.0, 400.0) : (double) p.preDelayMs * 0.001;
+        rev2.setPreDelay (preSec * fs);
         rev.setLfoRate (0.35);   // slow and fixed: the pitch wobble stays small (depth x rate), MODULATION sets the depth
         for (int c = 0; c < 2; ++c)
         {
@@ -718,6 +745,8 @@ private:
     int look = 384;
     std::array<Line, 2> lookLine;
     Reverb rev;
+    v2::Reverb rev2;
+    int activeEngine = 2;
     Delay dly;
     std::array<Biquad, 2> revLc, revHc;
     float essP = 0.0f, essGain = 1.0f, env = 0.0f, peakDb = -60.0f, duckGain = 1.0f;

@@ -1,21 +1,46 @@
-PASS  BOOTH DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                              1.0319 x  [0.9 .. 1.1]
-PASS  BOOTH DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                              1.0391 x  [0.9 .. 1.1]
-PASS  BOOTH: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz                                  10.0000 ms  [0 .. 40]
-PASS  BOOTH: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz                                          0.0488   [0 .. 0.25]
-PASS  ROOM DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                               1.0239 x  [0.9 .. 1.1]
-PASS  ROOM DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                               1.0034 x  [0.9 .. 1.1]
-PASS  ROOM: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz                                   10.0000 ms  [0 .. 40]
-PASS  ROOM: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz                                           0.0392   [0 .. 0.25]
-PASS  PLATE DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                              1.0265 x  [0.9 .. 1.1]
-PASS  PLATE DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                              1.0089 x  [0.9 .. 1.1]
-PASS  PLATE: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz                                  20.0000 ms  [0 .. 40]
-PASS  PLATE: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz                                          0.0392   [0 .. 0.25]
-PASS  HALL DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                               1.0258 x  [0.9 .. 1.1]
-PASS  HALL DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz                               1.0233 x  [0.9 .. 1.1]
-PASS  HALL: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz                                   20.0000 ms  [0 .. 40]
-PASS  HALL: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz                                           0.0366   [0 .. 0.25]
-PASS  DAMPING 100 %: RT60 at 8 kHz re 1 kHz @ 48.0 kHz                                                              0.5474 x  [0.4 .. 0.65]
-PASS  PRE-DELAY 50 ms: the reverb starts after look-ahead + 50 ms (re that) @ 48.0 kHz                              5.7500 ms  [0 .. 12]
+PASS  BOOTH DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [2.0 core]                   0.9776 x  [0.9 .. 1.1]
+PASS  BOOTH DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [2.0 core]                   0.9823 x  [0.9 .. 1.1]
+PASS  BOOTH: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz [2.0 core]                       10.0000 ms  [0 .. 40]
+PASS  BOOTH: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz [2.0 core]                               0.0494   [0 .. 0.25]
+PASS  ROOM DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [2.0 core]                    0.9814 x  [0.9 .. 1.1]
+PASS  ROOM DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [2.0 core]                    0.9931 x  [0.9 .. 1.1]
+PASS  ROOM: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz [2.0 core]                        10.0000 ms  [0 .. 40]
+PASS  ROOM: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz [2.0 core]                                0.0320   [0 .. 0.25]
+PASS  PLATE DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [2.0 core]                   1.0303 x  [0.9 .. 1.1]
+PASS  PLATE DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [2.0 core]                   1.0021 x  [0.9 .. 1.1]
+PASS  PLATE: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz [2.0 core]                       15.0000 ms  [0 .. 40]
+PASS  PLATE: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz [2.0 core]                               0.0448   [0 .. 0.25]
+PASS  HALL DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [2.0 core]                    1.0041 x  [0.9 .. 1.1]
+PASS  HALL DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [2.0 core]                    1.0158 x  [0.9 .. 1.1]
+PASS  HALL: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz [2.0 core]                        25.0000 ms  [0 .. 40]
+PASS  HALL: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz [2.0 core]                                0.0501   [0 .. 0.25]
+PASS  DAMPING 100 %: RT60 at 8 kHz re 1 kHz @ 48.0 kHz [2.0 core]                                                   0.5201 x  [0.4 .. 0.65]
+PASS  PRE-DELAY 50 ms: the reverb starts after look-ahead + 50 ms (re that) @ 48.0 kHz [2.0 core]                   0.0000 ms  [0 .. 12]
+PASS  BOOTH DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [1.0 core]                   1.0319 x  [0.9 .. 1.1]
+PASS  BOOTH DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [1.0 core]                   1.0391 x  [0.9 .. 1.1]
+PASS  BOOTH: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz [1.0 core]                       10.0000 ms  [0 .. 40]
+PASS  BOOTH: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz [1.0 core]                               0.0488   [0 .. 0.25]
+PASS  ROOM DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [1.0 core]                    1.0239 x  [0.9 .. 1.1]
+PASS  ROOM DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [1.0 core]                    1.0034 x  [0.9 .. 1.1]
+PASS  ROOM: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz [1.0 core]                        10.0000 ms  [0 .. 40]
+PASS  ROOM: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz [1.0 core]                                0.0392   [0 .. 0.25]
+PASS  PLATE DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [1.0 core]                   1.0265 x  [0.9 .. 1.1]
+PASS  PLATE DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [1.0 core]                   1.0089 x  [0.9 .. 1.1]
+PASS  PLATE: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz [1.0 core]                       20.0000 ms  [0 .. 40]
+PASS  PLATE: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz [1.0 core]                               0.0392   [0 .. 0.25]
+PASS  HALL DECAY 0.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [1.0 core]                    1.0258 x  [0.9 .. 1.1]
+PASS  HALL DECAY 1.5 s: measured RT60 (T30, 500 Hz - 2 kHz) re the setting @ 48.0 kHz [1.0 core]                    1.0233 x  [0.9 .. 1.1]
+PASS  HALL: echo density reaches 0.9 (Gaussian-dense) after the onset @ 48.0 kHz [1.0 core]                        20.0000 ms  [0 .. 40]
+PASS  HALL: L / R correlation of the tail (IACC, 100 ms - 1 s) @ 48.0 kHz [1.0 core]                                0.0366   [0 .. 0.25]
+PASS  DAMPING 100 %: RT60 at 8 kHz re 1 kHz @ 48.0 kHz [1.0 core]                                                   0.5474 x  [0.4 .. 0.65]
+PASS  PRE-DELAY 50 ms: the reverb starts after look-ahead + 50 ms (re that) @ 48.0 kHz [1.0 core]                   5.7500 ms  [0 .. 12]
+PASS  BASS 200 %: RT60 at 125 Hz re 1 kHz @ 48.0 kHz                                                                1.6593 x  [1.6 .. 2.4]
+PASS  BASS 50 %: RT60 at 125 Hz re 1 kHz @ 48.0 kHz                                                                 0.6179 x  [0.4 .. 0.65]
+PASS  FREEZE: the tail holds (energy 5.5 - 6.5 s re 1.0 - 1.5 s) @ 48.0 kHz                                        -0.4772 dB  [-1 .. 1]
+PASS  FREEZE: a click while frozen does not enter (energy 2.1 - 2.6 s re 1.0 - 1.5 s) @ 48.0 kHz                    0.6015 dB  [-1 .. 1]
+PASS  TRUE STEREO: a hard-left source - the reverb's first 60 ms, left re right @ 48.0 kHz                          3.3120 dB  [2 .. 40]
+PASS  TRUE STEREO: left-only vs right-only sources, the tails' correlation (left output) @ 48.0 kHz                 0.0098   [0 .. 0.3]
+PASS  PRE-DELAY SYNC 1/8 at 120 BPM: the reverb starts 250 ms after the look-ahead (re that) @ 48.0 kHz             0.0000 ms  [0 .. 12]
 PASS  SYNC 1/4 at 120 BPM: first repeat at 500 ms (error) @ 48.0 kHz                                                0.0000 ms  [0 .. 0.1]
 PASS  SYNC 1/4 at 120 BPM: repeats every 500 ms - 2nd and 3rd (largest error) @ 48.0 kHz                            0.0208 ms  [0 .. 0.1]
 PASS  FEEDBACK 50 %: each repeat 6 dB under the last (1 kHz burst, energy, 2nd re 1st) @ 48.0 kHz                  -6.0206 dB  [-6.5 .. -5.5]
@@ -25,17 +50,21 @@ PASS  DELAY switched off at 0.6 s: the repeat due at 1.0 s still sounds @ 48.0 k
 PASS  ESS DUCK 12 dB (decision forced on the esses): the esses reaching the effects (re off) @ 48.0 kHz            -9.9339 dB  [-14 .. -6]
 PASS  ESS DUCK: the vowels reaching the effects (re ESS DUCK off) @ 48.0 kHz                                       -0.0000 dB  [-0.5 .. 0]
 PASS  VOICE DUCK 12 dB: the reverb while the voice is loud (re no ducking) @ 48.0 kHz                             -11.9999 dB  [-14 .. -6]
-PASS  VOICE DUCK: the reverb in the gaps comes back (re no ducking) @ 48.0 kHz                                     -3.6235 dB  [-6 .. 0.5]
+PASS  VOICE DUCK: the reverb in the gaps comes back (re no ducking) @ 48.0 kHz                                     -3.5528 dB  [-6 .. 0.5]
 PASS  MIX 0 %: the output is the input (max difference) @ 48.0 kHz                                                  0.0000   [0 .. 0]
 PASS  OUTPUT -6 dB at MIX 0 % @ 48.0 kHz                                                                           -6.0000 dB  [-6.01 .. -5.99]
 PASS  every preset: silence in -> silence out (non-zero samples) @ 48.0 kHz                                         0.0000   [0 .. 0]
 PASS  every preset: NaN / Inf in -> finite output (non-finite samples) @ 48.0 kHz                                   0.0000   [0 .. 0]
 PASS  every preset: blocks of 512 vs random 1-2048 (max difference) @ 48.0 kHz                                      0.0000   [0 .. 1e-06]
-PASS  TYPE switched while ringing: largest sample step re the input's @ 48.0 kHz                                    1.0160 x  [0 .. 1.6]
+PASS  TYPE switched while ringing: largest sample step re the input's @ 48.0 kHz                                    1.0035 x  [0 .. 1.6]
 PASS  no memory allocation in process() (every preset, random blocks)                                               0.0000 allocs  [0 .. 0]
-ALL PASS: 35 of 35 checks passed (27.5 s)
-PASS  parameter count = 29
-PASS  every parameter in its frozen place, version hint 1
+ALL PASS: 60 of 60 checks passed (43.3 s)
+PASS  a pre-2.0 session (no engine in its state) keeps the 1.0 reverb
+PASS  a 2.0 session keeps the 2.0 reverb
+PASS  a factory preset selects the 2.0 reverb
+PASS  parameter count = 34
+PASS  every parameter in its frozen place, version hint 1 (1.0) / 2 (2.0)
+PASS  a new instance uses the 2.0 reverb core
 PASS  defaults = the engine's defaults (= the Init preset)
 PASS  no latency; tail length covers the longest reverb
 PASS  every factory preset applies its exact settings (13)
@@ -63,4 +92,4 @@ PASS  without a host transport the tempo is 120 BPM
 PASS  editor: opens / closes 5x while processing (100 % size)
 PASS  editor: resizable 75-200 %
 PASS  editor: re-opens at the last used size (150 %)
-ALL PASS: 29 of 29 plugin checks passed
+ALL PASS: 33 of 33 plugin checks passed

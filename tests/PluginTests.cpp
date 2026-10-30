@@ -75,7 +75,8 @@ bool sameParams (const axs::Params& a, const axs::Params& b)
            && a.sync == b.sync && a.note == b.note && near (a.timeMs, b.timeMs) && near (a.feedback, b.feedback) && a.pingPong == b.pingPong
            && near (a.dlyLowCut, b.dlyLowCut) && near (a.dlyHighCut, b.dlyHighCut) && near (a.drive, b.drive) && near (a.delayDb, b.delayDb)
            && near (a.delayToReverb, b.delayToReverb) && a.essDuck == b.essDuck && near (a.essDuckDb, b.essDuckDb)
-           && near (a.voiceDuckDb, b.voiceDuckDb) && near (a.duckReleaseMs, b.duckReleaseMs) && near (a.mix, b.mix) && near (a.outputDb, b.outputDb);
+           && near (a.voiceDuckDb, b.voiceDuckDb) && near (a.duckReleaseMs, b.duckReleaseMs) && near (a.mix, b.mix) && near (a.outputDb, b.outputDb)
+           && a.engine == b.engine && near (a.bass, b.bass) && a.freeze == b.freeze && a.preSync == b.preSync && a.preNote == b.preNote;
 }
 } // namespace
 
@@ -83,22 +84,46 @@ int main()
 {
     juce::ScopedJuceInitialiser_GUI init;
 
+    //== 2.0: a session saved before 2.0 (no "engine" in its state) keeps the 1.0 reverb; a 2.0 state keeps its own
+    {
+        SpaceProcessor a;
+        juce::MemoryBlock mb;
+        a.getStateInformation (mb);
+        auto xml = juce::AudioProcessor::getXmlFromBinary (mb.getData(), (int) mb.getSize());
+        auto tree = juce::ValueTree::fromXml (*xml);
+        tree.removeChild (tree.getChildWithProperty ("id", "engine"), nullptr);
+        for (const char* id : { "bass", "freeze", "preSync", "preNote" })
+            tree.removeChild (tree.getChildWithProperty ("id", id), nullptr);
+        juce::MemoryBlock old;
+        juce::AudioProcessor::copyXmlToBinary (*tree.createXml(), old);
+        SpaceProcessor b;
+        b.setStateInformation (old.getData(), (int) old.getSize());
+        check (b.readParams().engine == 1, "a pre-2.0 session (no engine in its state) keeps the 1.0 reverb");
+        SpaceProcessor c;
+        c.setStateInformation (mb.getData(), (int) mb.getSize());
+        check (c.readParams().engine == 2, "a 2.0 session keeps the 2.0 reverb");
+        c.setCurrentProgram (1);
+        check (c.readParams().engine == 2, "a factory preset selects the 2.0 reverb");
+    }
     //== 1. parameters: frozen IDs and order, version hints, defaults = the engine's
     {
         SpaceProcessor p;
         const juce::StringArray frozen { "reverbOn", "type", "size", "decay", "preDelay", "damping", "early", "modulation", "revLowCut",
                                          "revHighCut", "width", "reverbLevel", "delayOn", "sync", "note", "time", "feedback", "pingPong",
                                          "dlyLowCut", "dlyHighCut", "drive", "delayLevel", "delayToReverb", "essDuck", "essDuckDb",
-                                         "voiceDuck", "duckRelease", "mix", "output" };
+                                         "voiceDuck", "duckRelease", "mix", "output",
+                                         // 2.0, appended
+                                         "engine", "bass", "freeze", "preSync", "preNote" };
         auto& params = p.getParameters();
         check (params.size() == frozen.size(), "parameter count = " + juce::String (frozen.size()));
         bool ids = true;
         for (int i = 0; i < params.size() && i < frozen.size(); ++i)
         {
             auto* wp = dynamic_cast<juce::AudioProcessorParameterWithID*> (params[i]);
-            ids = ids && wp != nullptr && wp->getParameterID() == frozen[i] && wp->getVersionHint() == 1;
+            ids = ids && wp != nullptr && wp->getParameterID() == frozen[i] && wp->getVersionHint() == (i < 29 ? 1 : 2);
         }
-        check (ids, "every parameter in its frozen place, version hint 1");
+        check (ids, "every parameter in its frozen place, version hint 1 (1.0) / 2 (2.0)");
+        check (p.readParams().engine == 2, "a new instance uses the 2.0 reverb core");
         check (sameParams (p.readParams(), axs::Params {}), "defaults = the engine's defaults (= the Init preset)");
         check (p.getLatencySamples() == 0 && p.getTailLengthSeconds() >= 10.0, "no latency; tail length covers the longest reverb");
     }

@@ -28,12 +28,14 @@ More screens: [1/4 throw](docs/screenshots/space-throw.png), [ad-lib tail](docs/
 
 ## What it does
 
-**REVERB**
+**REVERB** (2.0: a new core - 32 lines, true stereo, three-band decay, voiced per type; sessions saved before 2.0 keep the
+1.0 core, bit for bit, and **ENGINE** switches)
 - **TYPE**: BOOTH (a small, dense booth around the voice), ROOM (a natural room, early reflections first), PLATE (the
   classic vocal plate, dense and bright from the start, no early reflections), HALL (big and long, for hooks).
 - **SIZE**, **DECAY** (RT60, 0.2-10 s), **PRE-DELAY** (0-250 ms: the words stay in front, the space comes behind),
-  **DAMPING** (how much faster the highs die: at 100 % the 8 kHz decay is twice as fast as the mids, at every sample
-  rate), **EARLY** (the early reflections against the tail), **MOD** (slow movement that keeps the tail smooth; 50 %
+  **BASS** (2.0: the lows' decay, 50 - 200 % of DECAY), **DAMPING** (how much faster the highs die: at 100 % 2.5x
+  faster than the mids in 2.0, 2x in 1.0), **FREEZE** (2.0: hold the tail, let nothing new in), **PRE SYNC** (pre-delay
+  in note values of the tempo), **EARLY** (the early reflections against the tail), **MOD** (slow movement that keeps the tail smooth; 50 %
   keeps any pitch wobble under about 7 cents), **LOW CUT** / **HIGH CUT** before the reverb, **WIDTH** (0-200 %),
   **LEVEL**.
 
@@ -61,15 +63,18 @@ over 10 ms and is then the input, bit for bit.
 Impulse responses measured through a real VST3 host by an independent script (`tests/independent/space_audit.py`,
 scipy, nothing from the plugin's code), wet only, filters open:
 
-| | Booth | Room | Plate | Hall |
+| 2.0 core | Booth | Room | Plate | Hall |
 |---|---|---|---|---|
-| Decay time (T30, 500 Hz-2 kHz) re the knob, 0.6 / 2 / 5 s | +3.5 / -1.8 / -0.2 % | +3.2 / -0.4 / -0.9 % | +2.1 / -0.8 / -0.4 % | +1.6 / +0.4 / +0.1 % |
-| Echo density 0.9 reached after the first sound (Abel & Huang) | 10 ms | 10 ms | 15 ms | 20 ms |
-| L/R correlation of the tail (IACC, 0.1-1 s) | 0.05 | 0.03 | 0.03 | 0.03 |
-| Tail colour: fine-spectrum peaks over the 1/3-octave envelope (white noise: +8.1 dB) | +11.0 dB | +10.7 dB | +10.9 dB | +9.6 dB |
+| Decay time (T30, 500 Hz-2 kHz) re the knob, 0.6 / 2 / 5 s | -1.1 / -1.7 / -1.3 % | -1.4 / -2.8 / +0.2 % | -1.1 / +0.6 / +1.2 % | -1.6 / +1.8 / +0.1 % |
+| Echo density 0.9 reached after the first sound (Abel & Huang) | 15 ms | 10 ms | 15 ms | 15 ms |
+| L/R correlation of the tail (IACC, 0.1-1 s) | 0.03 | 0.04 | 0.03 | 0.03 |
+| Tail colour, 200 Hz - 6 kHz, mean of 8 impulses (noise-like: 8.4 dB) | 10.0 dB | 9.9 dB | 9.2 dB | 8.9 dB |
+| (1.0 core, the same measure) | 10.3 dB | 9.9 dB | 10.1 dB | 9.4 dB |
 
-For reference, a well-regarded free open-source reverb measured the same way: echo density 10-35 ms, tail colour
-+10.0 to +11.9 dB. Decay times stay within 5 % at 44.1, 48, 96 and 192 kHz.
+The same colour measure on a respected commercial plate: 9.3 dB; on a well-regarded open-source reverb: plate 8.9, hall
+9.9, room 11.2 dB. On the artist's own dry vocal, used as a send with every wet matched in loudness: the 2.0 plate smears
+the consonants by 2.0 dB (1.0: 3.0, the commercial plate 2.2) and leaves the esses 19 dB under the vowels in its tail
+(1.0: 14) - 28 dB with ESS DUCK, the clearest of all measured.
 
 **Delay**: repeats within 0.03 ms of the set time at 44.1-96 kHz (sync 1/4 at 120 BPM: 500.000 ms), FEEDBACK 50 % =
 -6.02 dB per repeat, ping-pong separation > 170 dB.
@@ -80,19 +85,19 @@ changed (0.00 dB). On the artist's own dry vocal: 85 % of the ess moments turned
 
 **VOICE DUCK** 12 dB: the reverb -11.8 dB while the voice sounds, back within 0.7 dB in the pauses.
 
-**CPU**: 2.7-3.3 % of one core (stereo, 48 kHz, 128-sample blocks, Vocal Plate / Hall Hook / Ad-lib Tail presets).
+**CPU**: 3.4-4.1 % of one core (stereo, 48 kHz, 128-sample blocks, Vocal Plate / Hall Hook / Ad-lib Tail presets).
 No memory allocation while processing.
 
-**Verified for 1.0.1**: DSP suite 118 checks, plugin suite 29, ASan + UBSan clean, independent audit 69/69,
+**Verified for 2.0.0**: DSP suite 205 checks, plugin suite 33, ASan + UBSan clean, independent audit 74/74,
 pluginval strictness 10, Steinberg's VST3 validator 47/47.
 
 ## Install (Linux)
 
-Download `AxellSpace-1.0.1-linux-x86_64.tar.gz` from the
+Download `AxellSpace-2.0.0-linux-x86_64.tar.gz` from the
 [latest release](https://github.com/zmardanian/axell-space/releases/latest) (optional: `sha256sum -c SHA256SUMS.txt`), then:
 
-    tar xzf AxellSpace-1.0.1-linux-x86_64.tar.gz
-    cd AxellSpace-1.0.1-linux-x86_64
+    tar xzf AxellSpace-2.0.0-linux-x86_64.tar.gz
+    cd AxellSpace-2.0.0-linux-x86_64
     ./install.sh
 
 Then in REAPER: Options > Preferences > Plug-ins > VST > Re-scan. On a vocal track use MIX 15-30 %; on a send / aux

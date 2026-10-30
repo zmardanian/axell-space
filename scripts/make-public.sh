@@ -27,6 +27,9 @@ for f in "$PUB"/tests/*.txt "$PUB"/tests/independent/*.txt; do sed -i -E 's#/(va
 for d in CMakeLists.txt LICENSE README.md include src resources tests tools; do cp -r "$CORE/$d" "$PUB/external/axell-core/"; done
 rm -rf "$PUB/external/axell-core/tools/__pycache__"
 echo "axell-core $(git -C "$CORE" rev-parse --short HEAD)" > "$PUB/external/axell-core/VERSION"
+# privacy: report logs name build paths - the home folder becomes ~; then nothing personal may be left anywhere
+grep -rlIZ -E '/(var/)?home/[^/ ]+/' "$PUB" --include='*.txt' 2>/dev/null | xargs -0 -r sed -i -E 's#/(var/)?home/[^/ ]+/#~/#g' || true
+if grep -rIl -E "/(var/)?home/$USER/|petre""alex" "$PUB" --exclude-dir=.git; then echo "Personal paths or addresses in the public tree (above) - not published."; exit 1; fi
 cat > "$PUB/.gitignore" <<'IGN'
 build/
 build-*/

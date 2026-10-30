@@ -41,3 +41,23 @@ rejected.
 ## S7 - Exactness (1.0)
 Every gain glides (~20 ms) and lands exactly on its target: MIX 0 % and host bypass give the input bit for bit
 (tested at 44.1-192 kHz through a real host). No latency, no allocation while processing, block-size independent.
+
+## S8 - 2.0: the reverb core, measured against references
+Space 1.0.1, a respected commercial plate (rendered through the artist's licence, measurement only) and an open-source
+reverb (GPL: a benchmark, never code), matched decay, the same measures (research/revq.py): 1.0 was accurate (RT60 within
+6 %) and smooth (EDC curvature 0.27 - 0.45 dB) but THIN and BRIGHT (125 Hz share -22..-26 dB vs -13..-18 for the plate;
+8 kHz -4.5 vs -9..-11) and its ROOM / BOOTH rang (colour 11.9 / 12.2). 2.0: 32 lines (Hadamard), an allpass in every loop
+(density; modes smeared), three-band absorption (first-order shelves at 350 Hz and 5 kHz: BASS, DECAY, DAMPING; DAMPING
+100 % = highs 2.5x faster), smooth two-sine modulation per line (up to 1 ms: no audible pitch), a voicing per type (low
+shelf 300 Hz +1..+3 dB, high shelf 6 kHz -3..-6.5 dB), the late level matched to 1.0's at the same settings (+-1 dB).
+True stereo: L / R inputs to even / odd lines and per-side early reflections; the outputs read their own side's lines at
+full weight and the other's at 0.6 (the onset leans to the source, +2.3 dB for a hard-left source; mixed tails stay
+decorrelated, IACC 0.03 - 0.05). The colour measure: 200 Hz - 6 kHz only - above, it reads a steep spectral slope (a high
+cut, a voicing shelf) as colour; and a single impulse of a modulated tail varies by +-1 dB with the modulation's phase, so
+every colour figure is an 8-impulse mean (an earlier single-impulse comparison overstated the gains and was redone). Final:
+PLATE 9.2 / HALL 8.9 / BOOTH 10.0 / ROOM 9.9 (1.0: 10.1 / 9.4 / 10.3 / 9.9). The plate's lines were lengthened (10 - 85 ms:
+more modes per hertz) to reach the commercial plate (9.3); the open-source plate stays smoother (8.9).
+CPU: the 64 per-sample sine calls of the modulation became rotating phasors (renormalised every 4096 samples): 6.0 - 6.9 %
+-> 3.4 - 4.1 % of a core. Echo density is measured on the audible band (decimated to 48 kHz above it).
+Rejected: a 4x stronger DAMPING curve (it bent the decays: EDC curvature 0.9 - 1.4 dB); 1.8 ms modulation (more pitch
+wobble than 1.0); a single side-blind output (no stereo onset).

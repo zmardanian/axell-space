@@ -229,16 +229,50 @@ diff = [nm for r, nm in zip(runs[1:], names[1:]) if np.abs(out[r.name] - out["p0
 report("every preset sounds different from Init", not diff, ", ".join(diff) if diff else "ok")
 
 # ---------------------------------------------------------------- 6. the previous release renders the same (if it is here)
-prev = os.environ.get("AXELL_PREV_VST3", os.path.expanduser("~/axell-space-release/AxellSpace-1.0.0-linux-x86_64/Axell Space.vst3"))
+prev = os.environ.get("AXELL_PREV_VST3", os.path.expanduser("~/axell-space-release/AxellSpace-1.0.1-linux-x86_64/Axell Space.vst3"))
 if os.path.isdir(prev) and os.path.realpath(prev) != os.path.realpath(os.environ["AXELL_VST3"]):
-    runs_new = [Run(f"n{i}", fs, sets={"Program": nm}) for i, nm in enumerate(names)]
+    # 2.0: the factory presets now choose the 2.0 core; a session saved before 2.0 keeps the 1.0 core - every preset with
+    # the 1.0 core must render bit-identically to the previous release
+    runs_new = [Run(f"n{i}", fs, sets={"Program": nm, "Reverb Engine": "1.0 (classic)"}) for i, nm in enumerate(names)]
     runs_old = [Run(f"o{i}", fs, sets={"Program": nm}) for i, nm in enumerate(names)]
     a = run_all(runs_new, {r.name: x for r in runs_new}, jobname="new")
     b = run_all(runs_old, {r.name: x for r in runs_old}, jobname="old", plugin=prev)
     e = max(np.abs(a[f"n{i}"] - b[f"o{i}"]).max() for i in range(len(names)))
-    report(f"every factory preset renders bit-identically to the previous release ({os.path.basename(os.path.dirname(prev))})", e == 0.0, f"max difference {e:.3g}")
+    report(f"every factory preset with the 1.0 core renders bit-identically to the previous release ({os.path.basename(os.path.dirname(prev))})", e == 0.0, f"max difference {e:.3g}")
 else:
     print("skip  previous release not found")
+
+# ---------------------------------------------------------------- 7. 2.0: the tail's colour (metallic modes), per type
+def colour(x, fs, t0=0.15, t1=0.8):
+    """how far the finest spectral peaks of the late tail stand above a 1/3-octave-smoothed envelope (99.9th percentile,
+    dB), 200 Hz - 6 kHz: a noise-like tail sits near +8.4, metallic modes stand far above. (Above 6 kHz the measure reads
+    a steep spectral slope - a high cut, a voicing shelf - as colour: kept out.)"""
+    s_ = x[int(t0 * fs):int(t1 * fs)]; S = np.abs(np.fft.rfft(s_ * np.hanning(len(s_)))) ** 2; f = np.fft.rfftfreq(len(s_), 1 / fs)
+    m = (f > 200) & (f < 6000); dB = 10 * np.log10(S + 1e-30); env = np.zeros_like(dB)
+    for i in np.where(m)[0]:
+        sel = (f > f[i] / 2 ** (1 / 6)) & (f < f[i] * 2 ** (1 / 6)); env[i] = 10 * np.log10(S[sel].mean() + 1e-30)
+    return float(np.percentile((dB - env)[m], 99.9))
+fs = 48000
+# 8 impulses 3 s apart (different modulation phases: one snapshot of a modulated tail varies by +-1 dB), averaged
+K, GAP = 8, 3.0
+x = np.zeros((int((K * GAP + 1) * fs), 2))
+for k in range(K): x[int((0.1 + k * GAP) * fs)] = 0.5
+TYPES = ["Booth", "Room", "Plate", "Hall"]
+runs = [Run(f"c{e}{t}", fs, sets={"Reverb Type": TYPES[t], "Decay": "1.5", "Pre-Delay": "0", "Reverb Low Cut": "20", "Reverb High Cut": "20000",
+                                     "Mix": "100", "Ess Duck": "Off", "Reverb Engine": "2.0" if e == 2 else "1.0 (classic)"}) for e in (1, 2) for t in range(4)]
+out = run_all(runs, {r.name: x for r in runs}, jobname="colour")
+col = {}
+for r in runs:
+    y = out[r.name][:, 0] + out[r.name][:, 1]; v = []
+    for k in range(K):
+        a = int((0.1 + k * GAP) * fs); seg = y[a:a + int(2.5 * fs)]; v.append(colour(seg[onset(seg):], fs))
+    col[r.name] = float(np.mean(v))
+for t in range(4):
+    lim = 10.6 if t == 0 else 10.0
+    report(f"2.0 {TYPES[t]}: the tail's colour (metallic peaks; noise-like ~8.4)", col[f"c2{t}"] < lim, f"{col[f'c2{t}']:.2f} dB (1.0 core: {col[f'c1{t}']:.2f})")
+report("2.0: no more colour than 1.0 in any type, less in PLATE / HALL / BOOTH (8-impulse means)",
+       all(col[f"c2{t}"] < col[f"c1{t}"] + 0.15 for t in range(4)) and all(col[f"c2{t}"] < col[f"c1{t}"] - 0.2 for t in (0, 2, 3)),
+       " ".join(f"{TYPES[t]} {col[f'c2{t}'] - col[f'c1{t}']:+.2f}" for t in range(4)))
 
 fails = sum(1 for _, ok, _ in results if not ok)
 print(f"\n{'ALL PASS' if fails == 0 else 'FAILURES'}: {len(results) - fails} of {len(results)} independent checks passed ({time.time() - START:.0f} s)")

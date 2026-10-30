@@ -27,6 +27,12 @@ const char* modulation = "Slow movement inside the reverb that keeps its tail sm
 const char* revLow = "Removes lows before the reverb: no mud from the bass of the voice.";
 const char* revHigh = "Removes highs before the reverb: a darker, smoother space.";
 const char* width = "Stereo width of the reverb: 0 % mono, 100 % natural, 200 % extra wide.";
+const char* bass = "How long the lows ring re DECAY (2.0 core): 50 % half as long (tight, clear), 200 % twice (big, warm).";
+const char* freeze = "Hold the tail forever and let nothing new in - a pad under the next line; off: it decays from there (2.0 core).";
+const char* preSync = "PRE-DELAY in note values of the song's tempo instead of milliseconds.";
+const char* preNote = "The pre-delay's note value (with PRE SYNC).";
+const char* engine = "The reverb core. 2.0: 32 lines, true stereo, three-band decay, smoother and warmer. 1.0: the original - sessions saved "
+                     "before 2.0 keep it, so they sound exactly as they did.";
 const char* revLevel = "Level of the reverb in the wet signal.";
 const char* delayOn = "Delay on / off. Switched off, its repeats ring out first.";
 const char* sync = "SYNC: the delay time follows the song's tempo (the note value). Off: TIME in milliseconds.";
@@ -174,6 +180,13 @@ SpaceEditor::SpaceEditor (SpaceProcessor& p) : AudioProcessorEditor (&p), proc (
     revLow.bind (s, "revLowCut", tip::revLow);
     revHigh.bind (s, "revHighCut", tip::revHigh);
     width.bind (s, "width", tip::width);
+    bass.bind (s, "bass", tip::bass);
+    freeze.bind (s, "freeze", tip::freeze);
+    preSync.bind (s, "preSync", tip::preSync);
+    preNote.bind (s, "preNote", tip::preNote);
+    engine.bind (s, "engine", tip::engine);
+    for (auto* c : std::initializer_list<juce::Component*> { &bass, &freeze, &preSync, &preNote, &engine })
+        content.addAndMakeVisible (c);
     revLevel.bind (s, "reverbLevel", tip::revLevel);
     delayOn.bind (s, "delayOn", tip::delayOn);
     sync.bind (s, "sync", tip::sync);
@@ -272,13 +285,19 @@ void SpaceEditor::layout()
         reverbOn.setBounds (titleRow.removeFromLeft (130));
         titleRow.removeFromLeft (10);
         type.setBounds (titleRow.removeFromLeft (360).withSizeKeepingCentre (360, 28));
-        a.removeFromTop (8);
-        const int kw = a.getWidth() / 5;
+        engine.setBounds (titleRow.withSizeKeepingCentre (juce::jmin (titleRow.getWidth(), 92), 26));
+        a.removeFromTop (6);
+        auto mini = a.removeFromBottom (30);
+        const int kw = a.getWidth() / 6;
         auto row1 = a.removeFromTop (a.getHeight() / 2);
-        for (auto* k : { &size, &decay, &preDelay, &damping, &early })
+        for (auto* k : { &size, &decay, &bass, &preDelay, &damping, &early })
             k->setBounds (row1.removeFromLeft (kw));
         for (auto* k : { &modulation, &revLow, &revHigh, &width, &revLevel })
             k->setBounds (a.removeFromLeft (kw));
+        // 2.0: PRE SYNC + its note, FREEZE
+        preSync.setBounds (mini.removeFromLeft (110).withSizeKeepingCentre (104, 24));
+        preNote.setBounds (mini.removeFromLeft (110).withSizeKeepingCentre (100, 24));
+        freeze.setBounds (mini.removeFromRight (120).withSizeKeepingCentre (104, 24));
     }
     // DELAY: power + sync + note / time on the title row
     {
