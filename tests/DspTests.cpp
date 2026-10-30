@@ -564,6 +564,170 @@ static void testAllocAndCpu (bool quick)
             }
 }
 
+//== 3.0: the delay's character and UNMASK =========================================================================
+static Params delayOnly (Params p)
+{
+    p = wetOnly (p);
+    p.reverbOn = false; p.delayOn = true; p.sync = false; p.timeMs = 250.0f; p.feedback = 50.0f; p.pingPong = false;
+    p.dlyLowCut = 20.0f; p.dlyHighCut = 20000.0f; p.drive = 0.0f; p.delayDb = 0.0f; p.delayToReverb = 0.0f; p.voiceDuckDb = 0.0f;
+    p.wowFlutter = 0.0f;
+    return p;
+}
+// the energy centroid (ms) of the response inside [a, b] ms
+static double centroidMs (const std::vector<float>& y, double fs, double a, double b)
+{
+    double e = 0, t = 0;
+    for (size_t i = (size_t) (a * 0.001 * fs); i < (size_t) (b * 0.001 * fs) && i < y.size(); ++i)
+    {
+        e += (double) y[i] * y[i];
+        t += (double) y[i] * y[i] * (double) i;
+    }
+    return e > 0 ? 1000.0 * t / e / fs : -1.0;
+}
+static void testDelay3 (double fs)
+{
+    const std::string R = rateName (fs);
+    static const char* names[3] = { "CLEAN", "TAPE", "ANALOG" };
+    for (int mode = 0; mode < 3; ++mode)
+        for (float diffuse : { 0.0f, 60.0f })
+        {
+            if (mode == 0 && diffuse == 0.0f) continue;   // 1.0's delay: tested in testDelay
+            Params p = delayOnly (Params {});
+            p.dlyMode = mode; p.diffuse = diffuse;
+            const auto y = render (fs, p, impulse (fs, 1.2))[0];
+            const double c1 = centroidMs (y, fs, 150, 350), c2 = centroidMs (y, fs, 400, 600);
+            const std::string n = std::string (names[mode]) + (diffuse > 0 ? " + DIFFUSE 60 %" : "");
+            check (n + ": repeat 1 on time (250 ms, energy centroid)" + R, c1 - 250.0, -0.6, 0.6, "ms");
+            check (n + ": repeat 2 on time (500 ms)" + R, c2 - 500.0, -1.0, 1.0, "ms");
+        }
+    // a centred (mono) voice stays centred: at DIFFUSE 0 both sides' repeats are identical in every mode
+    for (int mode = 1; mode < 3; ++mode)
+    {
+        Params p = delayOnly (Params {});
+        p.dlyMode = mode; p.wowFlutter = 50.0f;
+        Buf x (2, std::vector<float> ((size_t) (1.5 * fs)));
+        for (size_t i = 0; i < x[0].size(); ++i) x[0][i] = x[1][i] = (i < (size_t) (0.3 * fs)) ? 0.2f * (float) std::sin (0.07 * (double) i) * (float) std::sin (0.0011 * (double) i) : 0.0f;
+        const auto y = render (fs, p, x);
+        double d = 0, e = 0;
+        for (size_t i = 0; i < y[0].size(); ++i) { d += std::pow ((double) y[0][i] - y[1][i], 2.0); e += std::pow ((double) y[0][i], 2.0); }
+        check (std::string (names[mode]) + ": a centred voice's repeats stay centred (L - R re L)" + R, 10.0 * std::log10 (d / e + 1e-30), -400, -100, "dB");
+    }
+    // FEEDBACK 95 % with DRIVE, DIFFUSE and WOW: every mode dies away (the loop never gains, even saturated)
+    for (int mode = 1; mode < 3; ++mode)
+    {
+        Params p = delayOnly (Params {});
+        p.dlyMode = mode; p.feedback = 95.0f; p.drive = 60.0f; p.diffuse = 60.0f; p.wowFlutter = 60.0f; p.timeMs = 180.0f;
+        Buf x (2, std::vector<float> ((size_t) (16.0 * fs)));
+        std::mt19937 g (5);
+        std::normal_distribution<float> nd (0.0f, 0.5f);
+        for (size_t i = 0; i < (size_t) (0.3 * fs); ++i) x[0][i] = x[1][i] = nd (g);
+        const auto y = render (fs, p, x)[0];
+        auto pk = [&] (double a) { float m = 0; for (size_t i = (size_t) (a * fs); i < (size_t) ((a + 1.0) * fs); ++i) m = std::max (m, std::abs (y[i])); return 20.0 * std::log10 (m + 1e-12); };
+        check (std::string (names[mode]) + ", FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more" + R, pk (14.5) - pk (0.5), -400, -30, "dB");
+    }
+    // a mode change fades the repeats out and in (no click): a sustained repeated tone, CLEAN -> TAPE -> ANALOG
+    {
+        Params p = delayOnly (Params {});
+        p.feedback = 0.0f; p.timeMs = 100.0f;
+        Engine e;
+        e.setParams (p);
+        e.prepare (fs);
+        e.setParams (p);
+        const size_t n = (size_t) (2.0 * fs);
+        Buf x (2, std::vector<float> (n));
+        for (size_t i = 0; i < n; ++i) x[0][i] = x[1][i] = 0.3f * (float) std::sin (2.0 * kPi * 440.0 * (double) i / fs);
+        std::vector<float> y (n);
+        for (size_t pos = 0; pos < n; pos += 128)
+        {
+            if (pos == (size_t) (0.6 * fs) / 128 * 128) { p.dlyMode = 1; e.setParams (p); }
+            if (pos == (size_t) (1.2 * fs) / 128 * 128) { p.dlyMode = 2; e.setParams (p); }
+            const int m = (int) std::min<size_t> (128, n - pos);
+            float* io[2] = { x[0].data() + pos, x[1].data() + pos };
+            e.process (io, 2, m);
+            std::copy (io[0], io[0] + m, y.begin() + (long) pos);
+        }
+        // the largest sample-to-sample step after the first repeat, re the steady tone's own largest step
+        double steady = 0, worst = 0;
+        for (size_t i = (size_t) (0.3 * fs); i < n; ++i)
+        {
+            const double d = std::abs ((double) y[i] - y[i - 1]);
+            if (i < (size_t) (0.55 * fs)) steady = std::max (steady, d);
+            worst = std::max (worst, d);
+        }
+        check ("delay mode change CLEAN > TAPE > ANALOG: no step larger than the tone's own" + R, worst / steady, 0.0, 1.05, "x");
+    }
+}
+static void testUnmask (double fs)
+{
+    const std::string R = rateName (fs);
+    // the voice holds a 1 kHz tone; the wet holds 1 kHz and 5 kHz: only the wet's 1 kHz steps back
+    {
+        Unmask u;
+        u.prepare (fs);
+        u.setAmount (100.0f);
+        const size_t n = (size_t) (1.5 * fs);
+        double e1 = 0, e5 = 0, r1 = 0, r5 = 0;
+        Biquad b1, b5, c1, c5;
+        b1.setBand (fs, 1000.0, 4.0); b5.setBand (fs, 5000.0, 4.0); c1.setBand (fs, 1000.0, 4.0); c5.setBand (fs, 5000.0, 4.0);
+        for (size_t i = 0; i < n; ++i)
+        {
+            const double t = (double) i / fs;
+            const float v = 0.3f * (float) std::sin (2.0 * kPi * 1000.0 * t);
+            const float w1 = 0.05f * (float) std::sin (2.0 * kPi * 1000.0 * t + 1.0), w5 = 0.05f * (float) std::sin (2.0 * kPi * 5000.0 * t);
+            float l = w1 + w5, r = l;
+            u.process (v, l, r);
+            const float o1 = b1.process (l), o5 = b5.process (l), i1 = c1.process (w1 + w5), i5 = c5.process (w1 + w5);
+            if (t > 1.0) { e1 += (double) o1 * o1; e5 += (double) o5 * o5; r1 += (double) i1 * i1; r5 += (double) i5 * i5; }
+        }
+        check ("UNMASK 100 %: the wet steps back where the voice sings (1 kHz; up to 12 dB)" + R, 10.0 * std::log10 (e1 / r1), -13.0, -10.5, "dB");
+        check ("UNMASK 100 %: the wet keeps the band the voice leaves free (5 kHz)" + R, 10.0 * std::log10 (e5 / r5), -0.5, 0.5, "dB");
+    }
+    // a voice gating on and off 8 times a second over a steady wet tone: the dips move smoothly (no zipper, no clicks).
+    // Measured above 5 kHz with an 8th-order high-pass (the 1 kHz tone itself is > 100 dB down there), re the same
+    // tone without UNMASK (the measurement's own floor)
+    {
+        const size_t n = (size_t) (2.0 * fs);
+        auto run = [&] (bool on) {
+            Unmask u;
+            u.prepare (fs);
+            u.setAmount (100.0f);
+            std::array<Biquad, 4> h;
+            for (auto& f : h) f.set (fs, 5000.0, true);
+            double eh = 0, et = 0;
+            for (size_t i = 0; i < n; ++i)
+            {
+                const double t = (double) i / fs;
+                const bool gate = std::fmod (t * 8.0, 1.0) < 0.5;
+                const float v = gate ? 0.3f * (float) std::sin (2.0 * kPi * 1000.0 * t) : 0.0f;
+                float l = 0.1f * (float) std::sin (2.0 * kPi * 1000.0 * t + 0.5), r = l;
+                if (on) u.process (v, l, r);
+                float y = l;
+                for (auto& f : h) y = f.process (y);
+                if (i > (size_t) (0.5 * fs)) { eh += (double) y * y; et += (double) l * l; }
+            }
+            return 10.0 * std::log10 (eh / et + 1e-30);
+        };
+        const double floorDb = run (false), withDb = run (true);
+        check ("UNMASK on a gated voice: artefacts above 5 kHz re the wet tone (floor without UNMASK: " + std::to_string ((int) std::lround (floorDb)) + " dB)" + R, withDb, -400, -90, "dB");
+    }
+    // UNMASK 0 %: the plugin's wet is untouched, bit for bit (the block is not run)
+    {
+        Params p = wetOnly (Params {});
+        p.unmask = 0.0f;
+        Buf x = impulse (fs, 1.0);
+        for (size_t i = 0; i < x[0].size(); ++i) x[0][i] = x[1][i] = 0.2f * (float) std::sin (0.05 * (double) i) * (i % 4800 < 2400 ? 1.0f : 0.0f);
+        const auto a = render (fs, p, x);
+        Params q = p; q.unmask = 30.0f;
+        const auto b = render (fs, q, x);
+        Params z = q; z.unmask = 0.0f;
+        const auto c = render (fs, z, x);
+        double d = 0, d2 = 0;
+        for (size_t i = 0; i < a[0].size(); ++i) { d = std::max (d, (double) std::abs (a[0][i] - c[0][i])); d2 = std::max (d2, (double) std::abs (a[0][i] - b[0][i])); }
+        check ("UNMASK 0 %: the output is the 2.0 output, bit for bit" + R, d, 0.0, 0.0, "");
+        check ("UNMASK 30 % acts (sanity)" + R, d2, 1e-4, 10.0, "");
+    }
+}
+
 int main (int argc, char** argv)
 {
     const bool quick = argc > 1 && std::strcmp (argv[1], "--quick") == 0;
@@ -574,6 +738,8 @@ int main (int argc, char** argv)
         testReverb (fs, quick, 1);
         testReverb2 (fs);
         testDelay (fs);
+        testDelay3 (fs);
+        testUnmask (fs);
         testDucking (fs);
         testSafety (fs);
     }

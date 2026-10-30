@@ -56,6 +56,7 @@ public:
     // meters (any thread): peak level of the last block, linear
     std::atomic<float> inPeak[2] { 0.0f, 0.0f }, outPeak[2] { 0.0f, 0.0f };
     std::atomic<float> essNow { 0.0f }, duckNow { 0.0f };
+    std::array<std::atomic<float>, axs::Engine::kUnmaskBands> unmaskNow {};   // UNMASK's band gains (dB), for the display
 
 private:
     void run (juce::AudioBuffer<float>& buffer, bool bypass);

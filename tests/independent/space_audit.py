@@ -219,7 +219,8 @@ report("VOICE DUCK: the reverb in the pauses (re off) - it blooms back", gaps > 
 
 # ---------------------------------------------------------------- 5. every factory preset: finite, bounded
 names = ["Init", "Vocal Plate", "Booth Air", "Small Room", "Dark Plate", "Hall Hook", "Slap Back", "1/4 Throw", "1/8 Ping-Pong",
-         "Dotted 1/8 Space", "Ad-lib Tail", "Send: Vocal Plate (100 % wet)", "Send: 1/4 Delay (100 % wet)"]
+         "Dotted 1/8 Space", "Ad-lib Tail", "Send: Vocal Plate (100 % wet)", "Send: 1/4 Delay (100 % wet)",
+         "Tape Echo", "Analog Dub", "Diffuse Trail", "Unmasked Hall"]
 x, _, _ = voice(fs, 6.0)
 runs = [Run(f"p{i}", fs, sets={"Program": nm}) for i, nm in enumerate(names)]
 out = run_all(runs, {r.name: x for r in runs}, jobname="presets")
@@ -228,19 +229,24 @@ report(f"all {len(names)} factory presets: finite, peak at most +6 dB over the i
 diff = [nm for r, nm in zip(runs[1:], names[1:]) if np.abs(out[r.name] - out["p0"]).max() < 1e-4]
 report("every preset sounds different from Init", not diff, ", ".join(diff) if diff else "ok")
 
-# ---------------------------------------------------------------- 6. the previous release renders the same (if it is here)
-prev = os.environ.get("AXELL_PREV_VST3", os.path.expanduser("~/axell-space-release/AxellSpace-1.0.1-linux-x86_64/Axell Space.vst3"))
-if os.path.isdir(prev) and os.path.realpath(prev) != os.path.realpath(os.environ["AXELL_VST3"]):
-    # 2.0: the factory presets now choose the 2.0 core; a session saved before 2.0 keeps the 1.0 core - every preset with
-    # the 1.0 core must render bit-identically to the previous release
-    runs_new = [Run(f"n{i}", fs, sets={"Program": nm, "Reverb Engine": "1.0 (classic)"}) for i, nm in enumerate(names)]
-    runs_old = [Run(f"o{i}", fs, sets={"Program": nm}) for i, nm in enumerate(names)]
-    a = run_all(runs_new, {r.name: x for r in runs_new}, jobname="new")
-    b = run_all(runs_old, {r.name: x for r in runs_old}, jobname="old", plugin=prev)
-    e = max(np.abs(a[f"n{i}"] - b[f"o{i}"]).max() for i in range(len(names)))
-    report(f"every factory preset with the 1.0 core renders bit-identically to the previous release ({os.path.basename(os.path.dirname(prev))})", e == 0.0, f"max difference {e:.3g}")
-else:
-    print("skip  previous release not found")
+# ---------------------------------------------------------------- 6. the previous releases render the same (if they are here)
+# a session saved before 3.0 has none of 3.0's parameters: it loads them at their defaults (CLEAN, DIFFUSE 0, UNMASK 0);
+# the 3.0 factory presets may use them, so the comparison sets them to those defaults explicitly
+NEUTRAL3 = {"Delay Mode": "Clean", "Wow & Flutter": "40", "Delay Diffuse": "0", "Unmask": "0"}
+OLD_NAMES = names[:13]   # the presets 1.0 / 2.0 shipped (3.0 appends its own after them)
+REL = os.path.expanduser("~/axell-space-release")
+for prev, extra, what in ((os.environ.get("AXELL_PREV_VST3", os.path.join(REL, "AxellSpace-2.0.0-linux-x86_64/Axell Space.vst3")), {}, "a 2.0 session"),
+                          (os.environ.get("AXELL_PREV1_VST3", os.path.join(REL, "AxellSpace-1.0.1-linux-x86_64/Axell Space.vst3")),
+                           {"Reverb Engine": "1.0 (classic)"}, "a 1.0 session (the 1.0 core)")):
+    if os.path.isdir(prev) and os.path.realpath(prev) != os.path.realpath(os.environ["AXELL_VST3"]):
+        runs_new = [Run(f"n{i}", fs, sets={"Program": nm, **extra, **NEUTRAL3}) for i, nm in enumerate(OLD_NAMES)]
+        runs_old = [Run(f"o{i}", fs, sets={"Program": nm}) for i, nm in enumerate(OLD_NAMES)]
+        a = run_all(runs_new, {r.name: x for r in runs_new}, jobname="new")
+        b = run_all(runs_old, {r.name: x for r in runs_old}, jobname="old", plugin=prev)
+        e = max(np.abs(a[f"n{i}"] - b[f"o{i}"]).max() for i in range(len(OLD_NAMES)))
+        report(f"{what}: every one of its {len(OLD_NAMES)} factory presets renders bit-identically to {os.path.basename(os.path.dirname(prev))}", e == 0.0, f"max difference {e:.3g}")
+    else:
+        print(f"skip  previous release for {what} not found")
 
 # ---------------------------------------------------------------- 7. 2.0: the tail's colour (metallic modes), per type
 def colour(x, fs, t0=0.15, t1=0.8):
@@ -273,6 +279,34 @@ for t in range(4):
 report("2.0: no more colour than 1.0 in any type, less in PLATE / HALL / BOOTH (8-impulse means)",
        all(col[f"c2{t}"] < col[f"c1{t}"] + 0.15 for t in range(4)) and all(col[f"c2{t}"] < col[f"c1{t}"] - 0.2 for t in (0, 2, 3)),
        " ".join(f"{TYPES[t]} {col[f'c2{t}'] - col[f'c1{t}']:+.2f}" for t in range(4)))
+
+# ---------------------------------------------------------------- 8. 3.0: the delay's character and UNMASK
+fs = 48000
+# TAPE / ANALOG: every pass a little darker (10 kHz re 1 kHz, repeat 3 re repeat 1); CLEAN: every repeat the same
+x = np.zeros((int(1.4 * fs), 2)); x[int(0.01 * fs)] = 0.25
+runs = [Run(f"m{m}", fs, sets={**DLY, "Delay Time": "250", "Feedback": "60", "Delay Mode": md, "Wow & Flutter": "0"}) for m, md in enumerate(("Clean", "Tape", "Analog"))]
+out = run_all(runs, {r.name: x for r in runs}, jobname="modes")
+def tilt(y, k):
+    c = int((0.01 + 0.25 * k) * fs); seg = y[c - int(0.05 * fs):c + int(0.05 * fs)] * np.hanning(int(0.1 * fs))
+    S = np.abs(np.fft.rfft(seg, 2 ** 15)) ** 2; f = np.fft.rfftfreq(2 ** 15, 1 / fs)
+    return 10 * np.log10(S[(f > 9000) & (f < 11000)].mean() / S[(f > 900) & (f < 1100)].mean())
+dark = {m: tilt(out[f"m{m}"][:, 0], 3) - tilt(out[f"m{m}"][:, 0], 1) for m in range(3)}
+report("CLEAN: repeat 3 has the tone of repeat 1 (10 kHz re 1 kHz)", abs(dark[0]) < 0.2, f"{dark[0]:+.2f} dB")
+report("TAPE: each pass darker (repeat 3 re repeat 1, 10 kHz re 1 kHz)", dark[1] < -6.0, f"{dark[1]:+.2f} dB")
+report("ANALOG: each pass darker still", dark[2] < dark[1], f"{dark[2]:+.2f} dB")
+# UNMASK: a broadband burst rings in a long hall; then a 700 Hz "voice" holds. While it holds, the tail steps back at
+# 700 Hz and stays in the bands the voice leaves free (4 - 8 kHz)
+n = int(2.4 * fs); t = np.arange(n) / fs; rng = np.random.default_rng(7)
+v = np.zeros(n); v[:int(0.3 * fs)] = 0.2 * rng.standard_normal(int(0.3 * fs))
+v[int(0.35 * fs):] += 0.2 * np.sin(2 * np.pi * 700 * t[int(0.35 * fs):])
+x = np.stack([v, v], 1)
+runs = [Run(f"u{u}", fs, sets={**WET, "Reverb Type": "Hall", "Decay": "4", "Voice Duck": "0", "Unmask": str(u)}) for u in (0, 100)]
+out = run_all(runs, {r.name: x for r in runs}, jobname="unmask")
+def band(y, lo, hi):
+    sos = sg.butter(4, [lo, hi], "bandpass", fs=fs, output="sos"); z = sg.sosfiltfilt(sos, y[int(0.9 * fs):int(2.2 * fs), 0]); return 10 * np.log10(np.mean(z ** 2))
+d700 = band(out["u100"], 600, 800) - band(out["u0"], 600, 800); dfree = band(out["u100"], 4000, 8000) - band(out["u0"], 4000, 8000)
+report("UNMASK 100 %: the tail steps back where the voice holds (600 - 800 Hz)", d700 < -6.0, f"{d700:+.2f} dB")
+report("UNMASK 100 %: the tail stays where the voice leaves room (4 - 8 kHz)", abs(dfree) < 1.0, f"{dfree:+.2f} dB")
 
 fails = sum(1 for _, ok, _ in results if not ok)
 print(f"\n{'ALL PASS' if fails == 0 else 'FAILURES'}: {len(results) - fails} of {len(results)} independent checks passed ({time.time() - START:.0f} s)")

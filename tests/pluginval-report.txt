@@ -1,5 +1,5 @@
 Started validating: ~/axell-space/build/AxellSpace_artefacts/Release/VST3/Axell Space.vst3
-Random seed: 0x714f98b
+Random seed: 0x333574d
 Validation started
 Strictness level: 10
 -----------------------------------------------------------------
@@ -7,7 +7,7 @@ Starting tests in: pluginval / Scan for plugins located in: ~/axell-space/build/
 Num plugins found: 1
 
 Testing plugin: VST3-Axell Space-b02c4651-8f6f2799
-Axell Yobag: Axell Space v2.0.0
+Axell Yobag: Axell Space v3.0.0
 Completed tests in pluginval / Scan for plugins located in: ~/axell-space/build/AxellSpace_artefacts/Release/VST3/Axell Space.vst3
 -----------------------------------------------------------------
 Starting tests in: pluginval / Open plugin (cold)...
@@ -27,7 +27,7 @@ Reported taillength: 12
 Completed tests in pluginval / Plugin info
 -----------------------------------------------------------------
 Starting tests in: pluginval / Plugin programs...
-Num programs: 13
+Num programs: 17
 All program names checked
 
 Changing program

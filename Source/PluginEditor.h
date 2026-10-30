@@ -10,10 +10,11 @@ constexpr int kHeight = 660;
 
 // the space at a glance: the reverb's decay (its level over time from the pre-delay to -60 dB) and the delay's
 // repeats, on one time axis; ESS DUCK and VOICE DUCK activity at the right
+// (3.0) and UNMASK's band dips as a strip, while UNMASK is on
 class SpaceView : public juce::Component, public juce::SettableTooltipClient
 {
 public:
-    void set (const axs::Params& p, int lookSamples, double fs, float essP, float duckDb);
+    void set (const axs::Params& p, int lookSamples, double fs, float essP, float duckDb, const float* unmaskDb);
     void paint (juce::Graphics&) override;
 
 private:
@@ -21,6 +22,7 @@ private:
     int look = 384;
     double rate = 48000.0;
     float ess = 0.0f, duck = 0.0f;
+    std::array<float, axs::Engine::kUnmaskBands> unmask {};
 };
 
 class SpaceEditor : public juce::AudioProcessorEditor, private juce::Timer
@@ -44,6 +46,7 @@ private:
     void layout();
     void showPresetMenu();
     void updateVisibility();
+    std::array<float, axs::Engine::kUnmaskBands> unmaskSnapshot() const;
 
     SpaceProcessor& proc;
     ui::LookAndFeel lnf;
@@ -70,6 +73,9 @@ private:
     ui::Knob time { "TIME", ui::col::accent }, feedback { "FEEDBACK", ui::col::accent }, dlyLow { "LOW CUT", ui::col::accent },
              dlyHigh { "HIGH CUT", ui::col::accent }, drive { "DRIVE", ui::col::accent }, dlyLevel { "LEVEL", ui::col::accent },
              toReverb { "INTO REVERB", ui::col::accent };
+    // 3.0
+    ui::Segmented dlyMode { { "CLEAN", "TAPE", "ANALOG" }, ui::col::accent };
+    ui::Knob wow { "WOW", ui::col::accent }, diffuse { "DIFFUSE", ui::col::accent }, unmask { "UNMASK", ui::col::global };
     // DUCKING + OUTPUT
     ui::Toggle essDuck { "ESS DUCK", ui::col::warn, "pill" };
     ui::Knob essDb { "ESS AMOUNT", ui::col::warn }, voiceDuck { "VOICE DUCK", ui::col::global }, release { "RELEASE", ui::col::global },

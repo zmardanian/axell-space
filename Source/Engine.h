@@ -67,6 +67,11 @@ struct Params
     bool freeze = false;         // hold the tail forever, no new input (2.0 core)
     bool preSync = false;        // PRE-DELAY in note values of the host tempo
     int preNote = 0;             // k1_16 .. (the delay's note list)
+    // 3.0
+    int dlyMode = 0;             // 0 CLEAN (1.0's delay, bit for bit), 1 TAPE, 2 ANALOG
+    float wowFlutter = 40.0f;    // % : TAPE / ANALOG pitch movement of the repeats
+    float diffuse = 0.0f;        // % : each repeat smears a little more (allpasses in the loop)
+    float unmask = 0.0f;         // % : the effects step back in the bands the voice is using, bloom in the gaps
     // DELAY
     bool delayOn = false;
     bool sync = true;
@@ -116,6 +121,23 @@ struct Biquad
             b0 = (float) ((1.0 - c) / 2.0 / a0); b1 = (float) ((1.0 - c) / a0); b2 = b0;
         }
         a1 = (float) (-2.0 * c / a0); a2 = (float) ((1.0 - al) / a0);
+    }
+    // RBJ band-pass (0 dB peak)
+    void setBand (double fs, double f, double q)
+    {
+        f = std::clamp (f, 10.0, 0.45 * fs);
+        const double w = 2.0 * kPi * f / fs, c = std::cos (w), al = std::sin (w) / (2.0 * q), a0 = 1.0 + al;
+        b0 = (float) (al / a0); b1 = 0.0f; b2 = (float) (-al / a0);
+        a1 = (float) (-2.0 * c / a0); a2 = (float) ((1.0 - al) / a0);
+    }
+    // RBJ peaking EQ (gain in dB; 0 dB = an exact pass-through)
+    void setPeak (double fs, double f, double q, double gainDb)
+    {
+        f = std::clamp (f, 10.0, 0.45 * fs);
+        const double A = std::pow (10.0, gainDb / 40.0), w = 2.0 * kPi * f / fs, c = std::cos (w), al = std::sin (w) / (2.0 * q);
+        const double a0 = 1.0 + al / A;
+        b0 = (float) ((1.0 + al * A) / a0); b1 = (float) (-2.0 * c / a0); b2 = (float) ((1.0 - al * A) / a0);
+        a1 = (float) (-2.0 * c / a0); a2 = (float) ((1.0 - al / A) / a0);
     }
 };
 
@@ -426,6 +448,16 @@ public:
         fs = sampleRate;
         for (auto& l : lines)
             l.prepare ((int) std::ceil (4.2 * fs));
+        for (auto& v : voice)
+            v.prepare (fs);
+        // the allpasses' delay, taken off each side's read time: both sides exactly on the beat, in step with each other
+        apDelay = { voice[0].apDelay (0), voice[0].apDelay (1) };
+        xStep = (float) (1.0 / (0.02 * fs));
+        driftK = 1.0 - std::exp (-1.0 / (0.4 * fs));
+        // the gain that gives the twice-filtered noise about a unit standard deviation
+        driftG = std::sqrt (3.0) / std::sqrt (driftK / 2.0) * std::sqrt (2.0);
+        wowW = 2.0 * kPi * 0.6 / fs;
+        flW = 2.0 * kPi * 7.1 / fs;
         reset();
     }
     void reset() noexcept
@@ -435,7 +467,46 @@ public:
         for (auto* fs4 : { &lc, &hc, &olc, &ohc })
             for (auto& f : *fs4)
                 f.reset();
+        for (auto& v : voice)
+            v.reset();
+        drift = drift1 = 0.0;
+        if (xfading || pending)
+        {
+            curPath = wantPath();
+            if (curPath > 0) voice[(size_t) (curPath - 1)].configure (wantMode, diff);
+        }
+        xfading = pending = false;
+        xm = 0.0f;
         curT = -1.0;
+    }
+    // 3.0: the character of the repeats. CLEAN with DIFFUSE 0 is 1.0's delay, bit for bit; TAPE, ANALOG (or DIFFUSE)
+    // run the character path. A change crossfades over 20 ms - what is heard AND what is written to the line, so the
+    // repeats already on their way pass from one character to the other without a step.
+    void setCharacter (int modeIn, float wowPct, float diffusePct) noexcept
+    {
+        wantMode = std::clamp (modeIn, 0, 2);
+        wow = std::clamp (wowPct, 0.0f, 100.0f) / 100.0f;
+        diff = std::clamp (diffusePct, 0.0f, 100.0f) / 100.0f;
+        if (! started)
+        {
+            started = true;
+            curPath = wantPath();
+            if (curPath > 0) voice[(size_t) (curPath - 1)].configure (wantMode, diff);
+            return;
+        }
+        if (xfading)
+        {
+            pending = true;   // after this crossfade, the next
+            return;
+        }
+        const int want = wantPath();
+        const bool same = want == 0 ? curPath == 0 : (curPath > 0 && voice[(size_t) (curPath - 1)].mode == wantMode);
+        if (same)
+        {
+            if (curPath > 0) voice[(size_t) (curPath - 1)].configure (wantMode, diff);   // DIFFUSE moves smoothly
+            return;
+        }
+        startCrossfade();
     }
     // period = the musical delay time; offset = how late the input already arrives (the engine's look-ahead): the
     // first repeat is read `period - offset` after the input, every further one `period` after the previous one
@@ -454,11 +525,256 @@ public:
             olc[(size_t) c].set (fs, lowCut, true);
             ohc[(size_t) c].set (fs, highCut, false);
         }
+        for (auto& v : voice)
+            v.setCuts (fs, lowCut, highCut);
         drive = std::clamp (drivePct, 0.0f, 100.0f) / 100.0f;
     }
     void process (float inL, float inR, float& outL, float& outR) noexcept
     {
         curT += 0.0007 * (targetT - curT);       // a time change glides (tape-like), never clicks
+        if (! xfading && curPath == 0)
+        {
+            processClean (inL, inR, outL, outR);   // 1.0's delay, unchanged
+            return;
+        }
+        advanceMod();
+        Out a {};
+        write (curPath, inL, inR, a);
+        if (! xfading)
+        {
+            push (a.wL, a.wR);
+            play (curPath, a);
+            outL = a.oL;
+            outR = a.oR;
+            return;
+        }
+        Out b {};
+        write (nextPath, inL, inR, b);
+        // the new path warms up for 10 ms at weight 0 (its filters and allpasses filled with the running signal), then
+        // the 20 ms crossfade
+        xm = std::min (1.0f, xm + xStep);
+        const float kb = std::max (0.0f, xm), ka = 1.0f - kb;
+        push (ka * a.wL + kb * b.wL, ka * a.wR + kb * b.wR);
+        play (curPath, a);
+        play (nextPath, b);
+        outL = ka * a.oL + kb * b.oL;
+        outR = ka * a.oR + kb * b.oR;
+        if (xm >= 1.0f)
+        {
+            xfading = false;
+            curPath = nextPath;
+            if (pending)
+            {
+                pending = false;
+                const int want = wantPath();
+                const bool same = want == 0 ? curPath == 0 : (curPath > 0 && voice[(size_t) (curPath - 1)].mode == wantMode);
+                if (! same) startCrossfade();
+                else if (curPath > 0) voice[(size_t) (curPath - 1)].configure (wantMode, diff);
+            }
+        }
+    }
+
+private:
+    struct Out { float wL, wR, oL, oR; double mod; };
+    // one character of the repeats: the play head's loop and heard paths (each: LOW / HIGH CUT, the head's tone,
+    // DIFFUSE's allpasses) and the record head
+    struct Voice
+    {
+        struct Chain
+        {
+            Biquad lc, hc, age, bump;
+            float trim = 1.0f;
+            float process (float v) noexcept
+            {
+                v = hc.process (lc.process (v));
+                return trim * age.process (bump.process (v));
+            }
+            void reset() noexcept { lc.reset(); hc.reset(); age.reset(); bump.reset(); }
+        };
+        std::array<std::array<Chain, 2>, 2> chain;   // the play head: [loop, heard][channel]
+        // DIFFUSE: two short allpasses per channel at the record head (both sides read the tape at the same instant)
+        std::array<std::array<Allpass, 2>, 2> ap;
+        std::array<float, 2> dcX {}, dcY {};
+        float dcR = 0.9993f;
+        double fs = 48000.0;
+        int mode = 1;
+        void prepare (double sampleRate)
+        {
+            fs = sampleRate;
+            // the right side's allpasses a little longer: with DIFFUSE the two sides' smears decorrelate
+            static constexpr double dms[2][2] = { { 1.31, 2.87 }, { 1.63, 3.41 } };
+            for (int c = 0; c < 2; ++c)
+                for (int k = 0; k < 2; ++k)
+                {
+                    auto& a = ap[(size_t) c][(size_t) k];
+                    a.line.prepare ((int) std::ceil (0.006 * fs));
+                    a.d = (int) std::lround (dms[c][k] * 0.001 * fs);
+                    a.g = 0.0f;
+                }
+            dcR = (float) std::exp (-2.0 * kPi * 5.0 / fs);
+            configure (mode, 0.0f);
+        }
+        double apDelay (int c) const noexcept { return (double) ap[(size_t) c][0].d + ap[(size_t) c][1].d; }
+        void reset() noexcept
+        {
+            for (auto& path : chain)
+                for (auto& c : path)
+                    c.reset();
+            for (auto& side : ap)
+                for (auto& a : side)
+                    a.line.reset();
+            dcX = {}; dcY = {};
+        }
+        void setCuts (double f, float lowCut, float highCut) noexcept
+        {
+            for (auto& path : chain)
+                for (auto& c : path)
+                {
+                    c.lc.set (f, lowCut, true);
+                    c.hc.set (f, highCut, false);
+                }
+        }
+        // TAPE: a gentle loss of top per pass and a head bump (the whole curve sits at or under 0 dB, so the loop never
+        // gains: FEEDBACK < 100 % always dies away); ANALOG: a dark two-pole low pass (a bucket-brigade line); CLEAN
+        // (with DIFFUSE): no tone of its own
+        void configure (int m, float diffuse) noexcept
+        {
+            mode = m;
+            for (auto& path : chain)
+                for (auto& ch : path)
+                {
+                    if (mode == 1)
+                    {
+                        ch.age.set (fs, 7500.0, false);
+                        ch.bump.setPeak (fs, 110.0, 0.9, 1.2);
+                        ch.trim = std::pow (10.0f, -1.2f / 20.0f);
+                    }
+                    else if (mode == 2)
+                    {
+                        ch.age.set (fs, 3600.0, false);
+                        ch.bump.setPeak (fs, 110.0, 0.9, 0.0);
+                        ch.trim = 1.0f;
+                    }
+                    else
+                    {
+                        ch.age.setPeak (fs, 1000.0, 0.7, 0.0);
+                        ch.bump.setPeak (fs, 110.0, 0.9, 0.0);
+                        ch.trim = 1.0f;
+                    }
+                }
+            for (auto& side : ap)
+                for (auto& a : side)
+                    a.g = 0.68f * diffuse;
+        }
+        // the record head: TAPE a soft, slightly asymmetric curve (even harmonics) that always works a little, more
+        // with DRIVE; ANALOG a soft symmetric clip; CLEAN (with DIFFUSE) DRIVE's tanh only
+        float record (int c, float x, float drive) noexcept
+        {
+            float y;
+            if (mode == 1)
+            {
+                const float k = 1.4f + 6.0f * drive;
+                y = std::tanh (k * (x + 0.08f * x * x)) / k;
+            }
+            else if (mode == 2)
+            {
+                const float k = 1.1f + 6.0f * drive;
+                y = x / (1.0f + 0.5f * std::abs (k * x));
+            }
+            else if (drive > 0.0f)
+            {
+                const float k = 1.0f + 6.0f * drive;
+                y = std::tanh (k * x) / k;
+            }
+            else
+                y = x;
+            // DC blocker (~5 Hz): the even term's offset never builds up in the loop
+            const float o = y - dcX[(size_t) c] + dcR * dcY[(size_t) c];
+            dcX[(size_t) c] = y; dcY[(size_t) c] = o;
+            return ap[(size_t) c][1].process (ap[(size_t) c][0].process (o));
+        }
+    };
+    int wantPath() const noexcept { return (wantMode != 0 || diff > 0.0f) ? 1 : 0; }
+    void startCrossfade() noexcept
+    {
+        // the new path starts from rest: CLEAN's own filters, or the character voice not in use
+        if (wantPath() == 0)
+        {
+            nextPath = 0;
+            for (auto* fs4 : { &lc, &hc, &olc, &ohc })
+                for (auto& f : *fs4)
+                    f.reset();
+        }
+        else
+        {
+            nextPath = curPath == 1 ? 2 : 1;
+            auto& v = voice[(size_t) (nextPath - 1)];
+            v.reset();
+            v.configure (wantMode, diff);
+        }
+        xm = -0.5f;   // 10 ms of warm-up
+        xfading = true;
+    }
+    void advanceMod() noexcept
+    {
+        wowPh += wowW;   if (wowPh > 2.0 * kPi) wowPh -= 2.0 * kPi;
+        flPh += flW;     if (flPh > 2.0 * kPi) flPh -= 2.0 * kPi;
+        // a slow random drift of the tape speed: white noise through two one-poles (~0.4 s)
+        rnd = rnd * 1664525u + 1013904223u;
+        const double u = (double) (rnd >> 8) / 8388608.0 - 1.0;
+        drift1 += driftK * (driftG * u - drift1);
+        drift += driftK * (drift1 - drift);
+    }
+    float shape (float x) const noexcept
+    {
+        if (drive <= 0.0f)
+            return x;
+        const float k = 1.0f + 6.0f * drive;
+        return std::tanh (k * x) / k;
+    }
+    void push (float wL, float wR) noexcept
+    {
+        lines[0].push (wL);
+        lines[1].push (wR);
+    }
+    // path 0 = CLEAN (1.0's arithmetic), 1 / 2 = a character voice. write(): what it puts on the line (before the push);
+    // play(): what it plays (after the push - as 1.0's delay reads it)
+    void write (int path, float inL, float inR, Out& o) noexcept
+    {
+        if (path == 0)
+        {
+            const float fL = lines[0].read (curT - 1.0), fR = lines[1].read (curT - 1.0);
+            const float sL = shape (hc[0].process (lc[0].process (fL))), sR = shape (hc[1].process (lc[1].process (fR)));
+            if (ping) { o.wL = 0.5f * (inL + inR) + fb * sR; o.wR = fb * sL; }
+            else      { o.wL = inL + fb * sL;                o.wR = inR + fb * sR; }
+            return;
+        }
+        auto& v = voice[(size_t) (path - 1)];
+        // the read head's movement in seconds at WOW & FLUTTER 100 % (TAPE): wow 0.8 ms at 0.6 Hz (0.30 % peak speed
+        // change), flutter 30 us at 7.1 Hz (0.13 %), drift 0.3 ms; ANALOG a fifth of it (clock jitter); CLEAN none
+        const double scale = (v.mode == 1 ? 1.0 : (v.mode == 2 ? 0.2 : 0.0)) * wow * fs;
+        o.mod = scale * (0.0008 * std::sin (wowPh) + 0.00003 * std::sin (flPh) + 0.0003 * drift);
+        // the allpasses' own delay is taken off each side's read time: the repeats stay on the beat
+        const float sL = v.chain[0][0].process (lines[0].read (std::max (2.0, curT - 1.0 - apDelay[0] + o.mod)));
+        const float sR = v.chain[0][1].process (lines[1].read (std::max (2.0, curT - 1.0 - apDelay[1] + o.mod)));
+        if (ping) { o.wL = v.record (0, 0.5f * (inL + inR) + fb * sR, drive); o.wR = v.record (1, fb * sL, drive); }
+        else      { o.wL = v.record (0, inL + fb * sL, drive);                o.wR = v.record (1, inR + fb * sR, drive); }
+    }
+    void play (int path, Out& o) noexcept
+    {
+        if (path == 0)
+        {
+            const double tOut = std::max (1.0, curT - off);
+            o.oL = shape (ohc[0].process (olc[0].process (lines[0].read (tOut))));
+            o.oR = shape (ohc[1].process (olc[1].process (lines[1].read (tOut))));
+            return;
+        }
+        auto& v = voice[(size_t) (path - 1)];
+        o.oL = v.chain[1][0].process (lines[0].read (std::max (2.0, curT - off - apDelay[0] + o.mod)));
+        o.oR = v.chain[1][1].process (lines[1].read (std::max (2.0, curT - off - apDelay[1] + o.mod)));
+    }
+    void processClean (float inL, float inR, float& outL, float& outR) noexcept
+    {
         // the loop: w(n) = in(n) + fb * filtered(w(n - T)); heard: w(n - (T - offset)), filtered alike
         const float fL = lines[0].read (curT - 1.0), fR = lines[1].read (curT - 1.0);
         const float sL = shape (hc[0].process (lc[0].process (fL))), sR = shape (hc[1].process (lc[1].process (fR)));
@@ -477,20 +793,180 @@ public:
         outL = shape (ohc[0].process (olc[0].process (lines[0].read (tOut)))) ;
         outR = shape (ohc[1].process (olc[1].process (lines[1].read (tOut))));
     }
-
-private:
-    float shape (float x) const noexcept
-    {
-        if (drive <= 0.0f)
-            return x;
-        const float k = 1.0f + 6.0f * drive;
-        return std::tanh (k * x) / k;
-    }
     double fs = 48000.0, targetT = 1000.0, curT = -1.0, off = 0.0;
+    std::array<double, 2> apDelay {};
     std::array<Line, 2> lines;
     std::array<Biquad, 2> lc, hc, olc, ohc;
-    float fb = 0.3f, drive = 0.0f;
-    bool ping = false;
+    std::array<Voice, 2> voice;
+    float fb = 0.3f, drive = 0.0f, wow = 0.4f, diff = 0.0f, xm = 0.0f, xStep = 0.001f;
+    int wantMode = 0, curPath = 0, nextPath = 0;
+    bool started = false, xfading = false, pending = false, ping = false;
+    double wowPh = 0.0, flPh = 0.0, wowW = 0.0, flW = 0.0, drift = 0.0, drift1 = 0.0, driftK = 1.0e-4, driftG = 1.0;
+    uint32_t rnd = 12345u;
+};
+
+//== UNMASK (3.0) ==================================================================================================
+// The effects step back only where they would cover the voice: 18 third-octave bands (200 Hz - 10 kHz). A band dips while
+// the voice uses it (within 20 dB of that band's own loud level, and holding a real share of the voice: within 30 dB of
+// its loudest band) AND the wet there comes within 30 dB of the voice. The 18 dips are solved together (the bells'
+// skirts overlap: the combined curve lands on each band's target, a free band next to a dipped one stays level) and
+// drawn with state-variable bells whose gain glides every sample (no zipper). AMOUNT 100 % = up to 12 dB per band.
+class Unmask
+{
+public:
+    static constexpr int B = 18;
+    void prepare (double sampleRate) noexcept
+    {
+        fs = sampleRate;
+        for (int b = 0; b < B; ++b)
+        {
+            for (auto& f : detV[(size_t) b]) f.setBand (fs, freq (b), kDetQ);
+            for (auto& f : detW[(size_t) b]) f.setBand (fs, freq (b), kDetQ);
+            gw[(size_t) b] = std::tan (kPi * std::min (freq (b), 0.45 * fs) / fs);
+        }
+        // the bells' interaction: M[i][j] = bell j's response (dB) at band i's centre, per dB of its own gain (at -6 dB)
+        double M[B][B], I[B][B];
+        for (int i = 0; i < B; ++i)
+            for (int j = 0; j < B; ++j)
+            {
+                const double w = gw[(size_t) i] / gw[(size_t) j], a6 = std::pow (10.0, -6.0 / 40.0);
+                const double re = 1.0 - w * w, n = re * re + std::pow (w * a6 / kQ, 2.0), d = re * re + std::pow (w / (a6 * kQ), 2.0);
+                M[i][j] = 10.0 * std::log10 (n / d) / -6.0;
+                I[i][j] = i == j ? 1.0 : 0.0;
+            }
+        for (int c = 0; c < B; ++c)   // Gauss-Jordan (M is well conditioned: diagonal 1, neighbours ~0.3)
+        {
+            const double pv = M[c][c];
+            for (int k = 0; k < B; ++k) { M[c][k] /= pv; I[c][k] /= pv; }
+            for (int r = 0; r < B; ++r)
+                if (r != c)
+                {
+                    const double f = M[r][c];
+                    for (int k = 0; k < B; ++k) { M[r][k] -= f * M[c][k]; I[r][k] -= f * I[c][k]; }
+                }
+        }
+        for (int i = 0; i < B; ++i)
+            for (int j = 0; j < B; ++j)
+                inv[(size_t) i][(size_t) j] = (float) I[i][j];
+        atk = 1.0f - std::exp (-32.0f / (0.003f * (float) fs));
+        rel = 1.0f - std::exp (-32.0f / (0.02f * (float) fs));
+        envK = 1.0f - std::exp (-1.0f / (0.006f * (float) fs));
+        smK = 1.0f - std::exp (-1.0f / (0.0007f * (float) fs));
+        reset();
+    }
+    void reset() noexcept
+    {
+        for (int b = 0; b < B; ++b)
+        {
+            for (auto& f : detV[(size_t) b]) f.reset();
+            for (auto& f : detW[(size_t) b]) f.reset();
+            envV[(size_t) b] = envW[(size_t) b] = 0.0f;
+            peak[(size_t) b] = -100.0f;
+            tgt[(size_t) b] = 0.0f;
+            A[(size_t) b] = aTo[(size_t) b] = As[(size_t) b] = 1.0f;
+            aStep[(size_t) b] = 0.0f;
+            ramp[(size_t) b] = 0;
+            for (auto& st : ic[(size_t) b]) st = {};
+        }
+        count = 0;
+        moving = false;
+    }
+    void setAmount (float pct) noexcept { depth = 12.0f * std::clamp (pct, 0.0f, 100.0f) / 100.0f; }
+    bool active() const noexcept { return depth > 0.0f || moving; }
+    // voice = the dry voice (mono, undelayed); wL / wR = the wet, filtered in place
+    void process (float voice, float& wL, float& wR) noexcept
+    {
+        const float wm = 0.5f * (wL + wR);
+        for (int b = 0; b < B; ++b)
+        {
+            const float v = detV[(size_t) b][1].process (detV[(size_t) b][0].process (voice));
+            const float w = detW[(size_t) b][1].process (detW[(size_t) b][0].process (wm));
+            envV[(size_t) b] += (v * v - envV[(size_t) b]) * envK;
+            envW[(size_t) b] += (w * w - envW[(size_t) b]) * envK;
+        }
+        if (++count >= 32)
+        {
+            count = 0;
+            control();
+        }
+        // the bells (Simper's trapezoidal state-variable form; only the gain terms move, every sample)
+        for (int b = 0; b < B; ++b)
+        {
+            if (ramp[(size_t) b] > 0)
+            {
+                A[(size_t) b] += aStep[(size_t) b];
+                if (--ramp[(size_t) b] == 0) A[(size_t) b] = aTo[(size_t) b];
+            }
+            // always run while UNMASK is on: at A = 1 the bell's output is its input exactly (m1 = 0) and its states stay
+            // in step, so a dip that starts later starts without a transient
+            // the 32-sample ramps rounded by a 0.7 ms one-pole (no corners: no sidebands at multiples of fs / 32)
+            As[(size_t) b] += (A[(size_t) b] - As[(size_t) b]) * smK;
+            if (std::abs (As[(size_t) b] - A[(size_t) b]) < 1.0e-7f) As[(size_t) b] = A[(size_t) b];
+            const float a = As[(size_t) b], g = (float) gw[(size_t) b], k = 1.0f / ((float) kQ * a);
+            const float a1 = 1.0f / (1.0f + g * (g + k)), a2 = g * a1, a3 = g * a2, m1 = k * (a * a - 1.0f);
+            wL = bell (ic[(size_t) b][0], wL, a1, a2, a3, m1);
+            wR = bell (ic[(size_t) b][1], wR, a1, a2, a3, m1);
+        }
+    }
+    float bandGainDb (int b) const noexcept { return 40.0f * std::log10 (As[(size_t) b]); }
+
+private:
+    struct Svf { float z1 = 0.0f, z2 = 0.0f; };
+    static float bell (Svf& s, float x, float a1, float a2, float a3, float m1) noexcept
+    {
+        const float v3 = x - s.z2, v1 = a1 * s.z1 + a2 * v3, v2 = s.z2 + a2 * s.z1 + a3 * v3;
+        s.z1 = 2.0f * v1 - s.z1;
+        s.z2 = 2.0f * v2 - s.z2;
+        return x + m1 * v1;
+    }
+    void control() noexcept
+    {
+        float loud = -200.0f;
+        std::array<float, B> ev {}, ew {};
+        for (int b = 0; b < B; ++b)
+        {
+            ev[(size_t) b] = 10.0f * std::log10 (envV[(size_t) b] + 1.0e-12f);
+            ew[(size_t) b] = 10.0f * std::log10 (envW[(size_t) b] + 1.0e-12f);
+            peak[(size_t) b] = std::max (ev[(size_t) b], peak[(size_t) b] - 0.5f * 32.0f / (float) fs);   // falls 0.5 dB/s
+            loud = std::max (loud, ev[(size_t) b]);
+        }
+        std::array<float, B> want {};
+        for (int b = 0; b < B; ++b)
+        {
+            const float own = std::clamp ((ev[(size_t) b] - (peak[(size_t) b] - 26.0f)) / 6.0f, 0.0f, 1.0f);
+            const float share = std::clamp ((ev[(size_t) b] - (loud - 36.0f)) / 6.0f, 0.0f, 1.0f);
+            const float covers = std::clamp ((ew[(size_t) b] - (ev[(size_t) b] - 30.0f)) / 6.0f, 0.0f, 1.0f);
+            const float t = -depth * own * share * covers;
+            tgt[(size_t) b] += (t - tgt[(size_t) b]) * (t < tgt[(size_t) b] ? atk : rel);
+            want[(size_t) b] = tgt[(size_t) b];
+        }
+        // solve for the bells' own gains (a free band beside a dip gets a small lift that cancels the skirt; at most +3 dB)
+        moving = false;
+        for (int i = 0; i < B; ++i)
+        {
+            float gdb = 0.0f;
+            for (int j = 0; j < B; ++j) gdb += inv[(size_t) i][(size_t) j] * want[(size_t) j];
+            gdb = std::clamp (gdb, -18.0f, 3.0f);
+            const bool atRest = std::abs (gdb) < 0.005f;
+            const float to = atRest ? 1.0f : std::pow (10.0f, gdb / 40.0f);
+            aTo[(size_t) i] = to;
+            aStep[(size_t) i] = (to - A[(size_t) i]) / 32.0f;
+            ramp[(size_t) i] = 32;   // a linear glide of the gain over the next 32 samples, landing exactly
+            moving = moving || ! atRest || std::abs (A[(size_t) i] - 1.0f) > 1.0e-7f || std::abs (As[(size_t) i] - 1.0f) > 1.0e-7f;
+        }
+    }
+    static double freq (int b) noexcept { return 200.0 * std::pow (2.0, b / 3.0); }   // 1/3-octave: 200 Hz - 10 kHz
+    static constexpr double kQ = 4.32, kDetQ = 2.8;   // detectors: two sections of Q 2.8 = about a third of an octave
+    double fs = 48000.0;
+    std::array<std::array<Biquad, 2>, B> detV, detW;
+    std::array<double, B> gw {};
+    std::array<std::array<float, B>, B> inv {};
+    std::array<std::array<Svf, 2>, B> ic {};
+    std::array<float, B> envV {}, envW {}, peak {}, tgt {}, A {}, aTo {}, aStep {}, As {};
+    float depth = 0.0f, atk = 0.5f, rel = 0.05f, envK = 0.002f, smK = 0.03f;
+    std::array<int, B> ramp {};
+    int count = 0;
+    bool moving = false;
 };
 
 //== the engine =====================================================================================================
@@ -507,6 +983,7 @@ public:
         rev.prepare (fs);
         rev2.prepare (fs);
         dly.prepare (fs);
+        unmask.prepare (fs);
         prepared = true;
         reset();
         apply (params, true);
@@ -519,6 +996,7 @@ public:
         rev.reset();
         rev2.reset();
         dly.reset();
+        unmask.reset();
         ess.reset();
         for (auto& f : revLc)
             f.reset();
@@ -547,6 +1025,8 @@ public:
     // tests only: force the ess decision (-1 = the network decides, 0 = never an ess, 1 = always)
     void forceEssDecision (int v) noexcept { forcedEss = v; }
     float wetDuckDb() const noexcept { return 20.0f * std::log10 (std::max (1.0e-6f, duckGain)); }
+    static constexpr int kUnmaskBands = Unmask::B;
+    float unmaskDb (int b) const noexcept { return unmaskOn ? unmask.bandGainDb (b) : 0.0f; }   // UNMASK's band gains now
     const Reverb& reverb() const noexcept { return rev; }
 
     // delay time in samples for the current settings (tempo-synced or free)
@@ -616,6 +1096,9 @@ public:
             rL = mid + side;
             rR = mid - side;
             float wetL = revG * rL + dlyG * dL, wetR = revG * rR + dlyG * dR;
+            // UNMASK: the wet dips in the bands the (dry, undelayed) voice is using; off = not run at all
+            if (unmaskOn)
+                unmask.process (m, wetL, wetR);
             // VOICE DUCK: the wet turned down while the voice is loud re its own running peak
             const float a = std::max (std::abs (xL), std::abs (xR));
             env += (a - env) * (a > env ? atkK : envRelK);
@@ -706,6 +1189,9 @@ private:
             revHc[(size_t) c].set (fs, p.revHighCut, false);
         }
         dly.set (delaySamples(), (double) look, p.feedback, p.pingPong, p.dlyLowCut, p.dlyHighCut, p.drive);
+        dly.setCharacter (p.dlyMode, p.wowFlutter, p.diffuse);
+        unmask.setAmount (p.unmask);
+        unmaskOn = p.unmask > 0.0f || unmask.active();
         widthT = std::clamp (p.width, 0.0f, 200.0f) / 100.0f;
         revT = std::pow (10.0f, p.reverbDb / 20.0f);
         dlyT = std::pow (10.0f, p.delayDb / 20.0f);
@@ -748,6 +1234,8 @@ private:
     v2::Reverb rev2;
     int activeEngine = 2;
     Delay dly;
+    Unmask unmask;
+    bool unmaskOn = false;
     std::array<Biquad, 2> revLc, revHc;
     float essP = 0.0f, essGain = 1.0f, env = 0.0f, peakDb = -60.0f, duckGain = 1.0f;
     float widthG = 1.0f, revG = 1.0f, dlyG = 1.0f, dryT = 1.0f, wetT = 0.5f, dryG = 1.0f, wetG = 0.5f, outG = 1.0f;

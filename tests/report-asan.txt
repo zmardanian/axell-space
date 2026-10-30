@@ -47,6 +47,26 @@ PASS  FEEDBACK 50 %: each repeat 6 dB under the last (1 kHz burst, energy, 2nd r
 PASS  PING-PONG, 180 ms: 1st repeat on the left (L re R) @ 48.0 kHz                                               236.7521 dB  [20 .. 400]
 PASS  PING-PONG: 2nd repeat on the right (L re R) @ 48.0 kHz                                                     -176.7957 dB  [-400 .. -20]
 PASS  DELAY switched off at 0.6 s: the repeat due at 1.0 s still sounds @ 48.0 kHz                                 -9.3894 dBFS  [-20 .. 0]
+PASS  CLEAN + DIFFUSE 60 %: repeat 1 on time (250 ms, energy centroid) @ 48.0 kHz                                   0.0214 ms  [-0.6 .. 0.6]
+PASS  CLEAN + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 48.0 kHz                                                    0.0312 ms  [-1 .. 1]
+PASS  TAPE: repeat 1 on time (250 ms, energy centroid) @ 48.0 kHz                                                   0.0767 ms  [-0.6 .. 0.6]
+PASS  TAPE: repeat 2 on time (500 ms) @ 48.0 kHz                                                                    0.1641 ms  [-1 .. 1]
+PASS  TAPE + DIFFUSE 60 %: repeat 1 on time (250 ms, energy centroid) @ 48.0 kHz                                    0.0568 ms  [-0.6 .. 0.6]
+PASS  TAPE + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 48.0 kHz                                                     0.1012 ms  [-1 .. 1]
+PASS  ANALOG: repeat 1 on time (250 ms, energy centroid) @ 48.0 kHz                                                 0.1403 ms  [-0.6 .. 0.6]
+PASS  ANALOG: repeat 2 on time (500 ms) @ 48.0 kHz                                                                  0.2994 ms  [-1 .. 1]
+PASS  ANALOG + DIFFUSE 60 %: repeat 1 on time (250 ms, energy centroid) @ 48.0 kHz                                  0.1109 ms  [-0.6 .. 0.6]
+PASS  ANALOG + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 48.0 kHz                                                   0.2099 ms  [-1 .. 1]
+PASS  TAPE: a centred voice's repeats stay centred (L - R re L) @ 48.0 kHz                                       -300.0000 dB  [-400 .. -100]
+PASS  ANALOG: a centred voice's repeats stay centred (L - R re L) @ 48.0 kHz                                     -300.0000 dB  [-400 .. -100]
+PASS  TAPE, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 48.0 kHz                     -64.2692 dB  [-400 .. -30]
+PASS  ANALOG, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 48.0 kHz                   -49.5413 dB  [-400 .. -30]
+PASS  delay mode change CLEAN > TAPE > ANALOG: no step larger than the tone's own @ 48.0 kHz                        1.0018 x  [0 .. 1.05]
+PASS  UNMASK 100 %: the wet steps back where the voice sings (1 kHz; up to 12 dB) @ 48.0 kHz                      -11.9397 dB  [-13 .. -10.5]
+PASS  UNMASK 100 %: the wet keeps the band the voice leaves free (5 kHz) @ 48.0 kHz                                -0.0447 dB  [-0.5 .. 0.5]
+PASS  UNMASK on a gated voice: artefacts above 5 kHz re the wet tone (floor without UNMASK: -114 dB) @ 48.0 kHz   -106.0077 dB  [-400 .. -90]
+PASS  UNMASK 0 %: the output is the 2.0 output, bit for bit @ 48.0 kHz                                              0.0000   [0 .. 0]
+PASS  UNMASK 30 % acts (sanity) @ 48.0 kHz                                                                          0.1365   [0.0001 .. 10]
 PASS  ESS DUCK 12 dB (decision forced on the esses): the esses reaching the effects (re off) @ 48.0 kHz            -9.9339 dB  [-14 .. -6]
 PASS  ESS DUCK: the vowels reaching the effects (re ESS DUCK off) @ 48.0 kHz                                       -0.0000 dB  [-0.5 .. 0]
 PASS  VOICE DUCK 12 dB: the reverb while the voice is loud (re no ducking) @ 48.0 kHz                             -11.9999 dB  [-14 .. -6]
@@ -56,18 +76,19 @@ PASS  OUTPUT -6 dB at MIX 0 % @ 48.0 kHz                                        
 PASS  every preset: silence in -> silence out (non-zero samples) @ 48.0 kHz                                         0.0000   [0 .. 0]
 PASS  every preset: NaN / Inf in -> finite output (non-finite samples) @ 48.0 kHz                                   0.0000   [0 .. 0]
 PASS  every preset: blocks of 512 vs random 1-2048 (max difference) @ 48.0 kHz                                      0.0000   [0 .. 1e-06]
-PASS  TYPE switched while ringing: largest sample step re the input's @ 48.0 kHz                                    1.0035 x  [0 .. 1.6]
+PASS  TYPE switched while ringing: largest sample step re the input's @ 48.0 kHz                                    1.0039 x  [0 .. 1.6]
 PASS  no memory allocation in process() (every preset, random blocks)                                               0.0000 allocs  [0 .. 0]
-ALL PASS: 60 of 60 checks passed (43.3 s)
+ALL PASS: 80 of 80 checks passed (62.5 s)
 PASS  a pre-2.0 session (no engine in its state) keeps the 1.0 reverb
 PASS  a 2.0 session keeps the 2.0 reverb
+PASS  a 2.0 session (no 3.0 parameters) keeps the 2.0 sound: CLEAN delay, DIFFUSE 0, UNMASK 0
 PASS  a factory preset selects the 2.0 reverb
-PASS  parameter count = 34
-PASS  every parameter in its frozen place, version hint 1 (1.0) / 2 (2.0)
+PASS  parameter count = 38
+PASS  every parameter in its frozen place, version hint 1 (1.0) / 2 (2.0) / 3 (3.0)
 PASS  a new instance uses the 2.0 reverb core
 PASS  defaults = the engine's defaults (= the Init preset)
 PASS  no latency; tail length covers the longest reverb
-PASS  every factory preset applies its exact settings (13)
+PASS  every factory preset applies its exact settings (17)
 PASS  state restore: every parameter identical
 PASS  A/B: each slot keeps its own settings
 PASS  state restore: the preset name comes back (1/4 Throw)
@@ -92,4 +113,4 @@ PASS  without a host transport the tempo is 120 BPM
 PASS  editor: opens / closes 5x while processing (100 % size)
 PASS  editor: resizable 75-200 %
 PASS  editor: re-opens at the last used size (150 %)
-ALL PASS: 33 of 33 plugin checks passed
+ALL PASS: 34 of 34 plugin checks passed

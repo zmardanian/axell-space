@@ -68,6 +68,11 @@ APVTS::ParameterLayout SpaceProcessor::createLayout()
     p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "freeze", 2 }, "Freeze", d.freeze));
     p.push_back (std::make_unique<AudioParameterBool> (ParameterID { "preSync", 2 }, "Pre-Delay Sync", d.preSync));
     p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { "preNote", 2 }, "Pre-Delay Note", kNotes, d.preNote));
+    // 3.0 (appended; their defaults are the 2.0 sound, so older sessions are unchanged): the delay's character, UNMASK
+    p.push_back (std::make_unique<AudioParameterChoice> (ParameterID { "dlyMode", 3 }, "Delay Mode", StringArray { "Clean", "Tape", "Analog" }, d.dlyMode));
+    p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "wow", 3 }, "Wow & Flutter", NormalisableRange<float> (0.0f, 100.0f, 0.1f), d.wowFlutter, fmt (pctText)));
+    p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "diffuse", 3 }, "Delay Diffuse", NormalisableRange<float> (0.0f, 100.0f, 0.1f), d.diffuse, fmt (pctText)));
+    p.push_back (std::make_unique<AudioParameterFloat> (ParameterID { "unmask", 3 }, "Unmask", NormalisableRange<float> (0.0f, 100.0f, 0.1f), d.unmask, fmt (pctText)));
     return { p.begin(), p.end() };
 }
 
@@ -117,6 +122,10 @@ axs::Params SpaceProcessor::readParams() const
     p.freeze = v ("freeze") > 0.5f;
     p.preSync = v ("preSync") > 0.5f;
     p.preNote = juce::roundToInt (v ("preNote"));
+    p.dlyMode = juce::roundToInt (v ("dlyMode"));
+    p.wowFlutter = v ("wow");
+    p.diffuse = v ("diffuse");
+    p.unmask = v ("unmask");
     p.bpm = bpm.load();
     return p;
 }
@@ -160,6 +169,10 @@ void SpaceProcessor::writeParams (const axs::Params& p)
     set ("bass", p.bass);
     set ("preSync", p.preSync ? 1.0f : 0.0f);
     set ("preNote", (float) p.preNote);
+    set ("dlyMode", (float) p.dlyMode);
+    set ("wow", p.wowFlutter);
+    set ("diffuse", p.diffuse);
+    set ("unmask", p.unmask);
 }
 
 bool SpaceProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -230,6 +243,8 @@ void SpaceProcessor::run (juce::AudioBuffer<float>& buffer, bool bypass)
         outPeak[c] = buffer.getMagnitude (c, 0, n);
     essNow = dsp.essProbability();
     duckNow = dsp.wetDuckDb();
+    for (int b = 0; b < axs::Engine::kUnmaskBands; ++b)
+        unmaskNow[(size_t) b].store (dsp.unmaskDb (b), std::memory_order_relaxed);
 }
 
 void SpaceProcessor::processBlock (juce::AudioBuffer<float>& b, juce::MidiBuffer&) { run (b, false); }

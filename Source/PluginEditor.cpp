@@ -45,6 +45,16 @@ const char* dlyHigh = "Darkens every repeat a little more, like tape or an analo
 const char* drive = "Soft saturation of the repeats: warm, worn repeats like an old tape echo.";
 const char* dlyLevel = "Level of the delay in the wet signal.";
 const char* toReverb = "Sends the delay's repeats into the reverb: the echoes melt into the space.";
+const char* dlyMode = "The repeats' character. CLEAN: exact copies. TAPE: recorded on tape - each pass a little darker (about 6 dB less "
+                      "at 10 kHz), a warm head bump, soft saturation, the tape's wow and flutter. ANALOG: a bucket-brigade line - "
+                      "dark (3.6 kHz), soft clipping, a hint of clock jitter. A change crossfades over 20 ms.";
+const char* wow = "How much the tape moves (TAPE; ANALOG a fifth of it): 40 % = a healthy machine (about 1.6 cents of wow), "
+                  "100 % = a worn one (4 cents).";
+const char* diffuse = "Each repeat smears a little more than the last: from distinct echoes to a soft, reverb-like trail. The "
+                      "repeats stay on the beat.";
+const char* unmask = "The effects step back only where they would cover the voice - per third of an octave, while the voice "
+                     "uses it - and stay full everywhere else (the air while you sing a vowel, the body while an ess hisses). "
+                     "On the artist's vocal: as clear as VOICE DUCK 6 dB with 2 dB more of the space kept. Up to 12 dB.";
 const char* essDuck = "Keeps the esses (S, SH, CH) out of the reverb and the delay: the suite's sibilance network marks them "
                       "and turns them down before they reach the effects - no splashy, hissing tails. The voice itself is untouched.";
 const char* essDb = "How far an ess is turned down before the effects (measured on your vocal: 85 % of ess moments turned down, no vowel touched).";
@@ -60,9 +70,11 @@ const char* view = "The space: the reverb's decay (level over time, to -60 dB) a
 } // namespace
 
 //==============================================================================
-void SpaceView::set (const axs::Params& p, int lookSamples, double fs, float essP, float duckDb)
+void SpaceView::set (const axs::Params& p, int lookSamples, double fs, float essP, float duckDb, const float* unmaskDb)
 {
     params = p;
+    for (size_t b = 0; b < unmask.size(); ++b)
+        unmask[b] = unmaskDb[b];
     look = lookSamples;
     rate = fs;
     ess = essP;
@@ -140,6 +152,29 @@ void SpaceView::paint (juce::Graphics& g)
             g.fillRoundedRectangle (bx - 2.5f, y (db), 5.0f, plot.getBottom() - y (db), 2.0f);
         }
     }
+    // UNMASK: what it carves out of the effects right now, 200 Hz - 10 kHz (a bar hangs down per third of an octave)
+    if (params.unmask > 0.0f)
+    {
+        auto strip = Rectangle<float> (plot.getRight() - 196.0f, plot.getY() + 4.0f, 190.0f, 46.0f);
+        g.setColour (col::well.withAlpha (0.85f));
+        g.fillRoundedRectangle (strip.expanded (4.0f, 2.0f), 5.0f);
+        g.setFont (ui::caps (9.0f, 1));
+        g.setColour (col::faint);
+        g.drawText ("UNMASK", strip.removeFromTop (11.0f), Justification::centredLeft);
+        const float bw = strip.getWidth() / (float) unmask.size();
+        g.setColour (col::grid);
+        g.drawHorizontalLine ((int) strip.getY(), strip.getX(), strip.getRight());
+        for (size_t b = 0; b < unmask.size(); ++b)
+        {
+            const float d = jlimit (0.0f, 1.0f, -unmask[b] / 12.0f);
+            g.setColour (col::global.withAlpha (0.35f + 0.65f * d));
+            g.fillRoundedRectangle (strip.getX() + bw * (float) b + 1.0f, strip.getY(), bw - 2.0f, jmax (1.0f, d * strip.getHeight()), 1.5f);
+        }
+        g.setFont (ui::font (8.5f));
+        g.setColour (col::faint);
+        g.drawText ("200", Rectangle<float> (strip.getX(), strip.getBottom() - 10.0f, 30.0f, 10.0f), Justification::centredLeft);
+        g.drawText ("10k", Rectangle<float> (strip.getRight() - 30.0f, strip.getBottom() - 10.0f, 30.0f, 10.0f), Justification::centredRight);
+    }
     // ESS and DUCK at the right
     auto side = Rectangle<float> (r).removeFromRight (104.0f).reduced (8.0f, 12.0f);
     g.setFont (ui::caps (10.0f, 1));
@@ -199,6 +234,13 @@ SpaceEditor::SpaceEditor (SpaceProcessor& p) : AudioProcessorEditor (&p), proc (
     drive.bind (s, "drive", tip::drive);
     dlyLevel.bind (s, "delayLevel", tip::dlyLevel);
     toReverb.bind (s, "delayToReverb", tip::toReverb);
+    if (auto* mp = s.getParameter ("dlyMode"))
+        dlyMode.bind (*mp, tip::dlyMode);
+    wow.bind (s, "wow", tip::wow);
+    diffuse.bind (s, "diffuse", tip::diffuse);
+    unmask.bind (s, "unmask", tip::unmask);
+    for (auto* c : std::initializer_list<juce::Component*> { &dlyMode, &wow, &diffuse, &unmask })
+        content.addAndMakeVisible (c);
     essDuck.bind (s, "essDuck", tip::essDuck);
     essDb.bind (s, "essDuckDb", tip::essDb);
     voiceDuck.bind (s, "voiceDuck", tip::voiceDuck);
@@ -311,12 +353,15 @@ void SpaceEditor::layout()
         note.setBounds (noteArea);
         titleRow.removeFromLeft (8);
         pingPong.setBounds (titleRow.withSizeKeepingCentre (juce::jmin (titleRow.getWidth(), 112), 26));
-        a.removeFromTop (8);
-        const int kw = a.getWidth() / 4;
+        a.removeFromTop (6);
+        // 3.0: the character of the repeats on the bottom row (as the reverb's PRE SYNC / FREEZE row)
+        auto mini = a.removeFromBottom (30);
+        dlyMode.setBounds (mini.withSizeKeepingCentre (juce::jmin (mini.getWidth(), 300), 26));
+        const int kw = a.getWidth() / 5;
         auto row1 = a.removeFromTop (a.getHeight() / 2);
-        for (auto* k : { &time, &feedback, &drive, &dlyLevel })
+        for (auto* k : { &time, &feedback, &drive, &wow, &dlyLevel })
             k->setBounds (row1.removeFromLeft (kw));
-        for (auto* k : { &dlyLow, &dlyHigh, &toReverb })
+        for (auto* k : { &dlyLow, &dlyHigh, &diffuse, &toReverb })
             k->setBounds (a.removeFromLeft (kw));
     }
     // DUCKING + OUTPUT + meters
@@ -330,8 +375,8 @@ void SpaceEditor::layout()
         auto duckZone = a.removeFromLeft (520);
         auto t = duckZone.removeFromLeft (120);
         essDuck.setBounds (t.withSizeKeepingCentre (112, 28));
-        const int kw = duckZone.getWidth() / 3;
-        for (auto* k : { &essDb, &voiceDuck, &release })
+        const int kw = duckZone.getWidth() / 4;
+        for (auto* k : { &essDb, &voiceDuck, &release, &unmask })
             k->setBounds (duckZone.removeFromLeft (kw));
         a.removeFromLeft (20);
         const int ow = a.getWidth() / 2;
@@ -341,12 +386,24 @@ void SpaceEditor::layout()
     updateVisibility();
 }
 
+std::array<float, axs::Engine::kUnmaskBands> SpaceEditor::unmaskSnapshot() const
+{
+    std::array<float, axs::Engine::kUnmaskBands> a {};
+    for (size_t b = 0; b < a.size(); ++b)
+        a[b] = proc.unmaskNow[b].load (std::memory_order_relaxed);
+    return a;
+}
+
 void SpaceEditor::updateVisibility()
 {
     const bool s = proc.apvts.getRawParameterValue ("sync")->load() > 0.5f;
     note.setVisible (s);
     time.setEnabled (! s);
     time.setAlpha (s ? 0.4f : 1.0f);
+    // WOW moves the tape / the bucket brigade: nothing to move in CLEAN
+    const bool clean = proc.apvts.getRawParameterValue ("dlyMode")->load() < 0.5f;
+    wow.setEnabled (! clean);
+    wow.setAlpha (clean ? 0.4f : 1.0f);
 }
 
 void SpaceEditor::Content::paint (juce::Graphics& g)
@@ -385,7 +442,7 @@ void SpaceEditor::Content::paint (juce::Graphics& g)
 void SpaceEditor::timerCallback()
 {
     view.set (proc.readParams(), proc.engine().lookAheadSamples(), proc.getSampleRate() > 0.0 ? proc.getSampleRate() : 48000.0,
-              proc.essNow.load(), proc.duckNow.load());
+              proc.essNow.load(), proc.duckNow.load(), unmaskSnapshot().data());
     inMeter.push (proc.inPeak[0].load(), proc.inPeak[1].load(), 2);
     outMeter.push (proc.outPeak[0].load(), proc.outPeak[1].load(), 2);
     presetName.setButtonText (proc.getPresetName());

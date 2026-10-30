@@ -61,3 +61,35 @@ CPU: the 64 per-sample sine calls of the modulation became rotating phasors (ren
 -> 3.4 - 4.1 % of a core. Echo density is measured on the audible band (decimated to 48 kHz above it).
 Rejected: a 4x stronger DAMPING curve (it bent the decays: EDC curvature 0.9 - 1.4 dB); 1.8 ms modulation (more pitch
 wobble than 1.0); a single side-blind output (no stereo onset).
+
+## S9 - 3.0: the delay's character and UNMASK
+**TAPE / ANALOG.** The record head saturates what goes onto the line (input + feedback: TAPE tanh with a small even
+term, ANALOG a soft clip; a 5 Hz DC blocker keeps the even term's offset out of the loop), the play head reads it moving
+(wow 0.8 ms at 0.6 Hz = 0.30 % peak speed change, flutter 30 us at 7.1 Hz, a slow random drift; ANALOG a fifth) and
+filters each pass (TAPE: 7.5 kHz two-pole and a +1.2 dB head bump at 110 Hz with the whole curve trimmed under 0 dB, so
+the loop never gains; ANALOG 3.6 kHz). Measured: wow 1.5 / 4.0 cents rms at 40 / 100 %, repeat 1 at 10 kHz -7 dB re
+1 kHz (TAPE) / -20 dB (ANALOG), then about -6.5 dB per pass; THD at -6 dBFS -29 dB (TAPE, 2nd -37 dB) / -28 dB (ANALOG,
+odd only); FEEDBACK 95 % + DRIVE 60 + DIFFUSE 60: 14 s later 50 - 66 dB down. The reference we own (a commercial tape
+echo) could not be loaded in the measurement host (it hangs while loading under Wine), so TAPE was set against
+published tape-echo behaviour (wow and flutter in tenths of a percent, a darker repeat each pass, soft saturation), not
+against that plugin. DIFFUSE: two short allpasses per side at the record head (1.3 / 2.9 ms left, 1.6 / 3.4 ms right),
+their delay taken off each side's read time - the repeats stay on the beat, and both sides read the tape at the same
+instant (a centred voice stays bit-identical left and right; reading per side with one mean compensation had combed the
+repeats by 0.85 ms - found on the artist's vocal as a 7 dB mono loss, fixed before release). A MODE change runs both
+characters for 10 ms of warm-up and a 20 ms crossfade of what is heard AND what is written (reading the line written in
+the old character with the new head had made a step 100 ms later).
+
+**UNMASK.** An offline ideal (dip exactly the third-octave x 20 ms cells the voice uses, nothing else) showed the room:
+VOICE DUCK 6 dB's clarity for 1.9 dB of space instead of 5.7. The first real-time versions acted almost broadband (the
+same space as VOICE DUCK): six wide bands, a 25 dB activity window, a 60 ms release (the dip lingered after the voice left
+a band), 2nd-order detectors leaking a loud neighbour band, overlapping peaks summing to 15 dB where 9 were set,
+coefficient steps every 32 samples (artefacts -37 dB). 3.0: 18 third-octave bands; 4th-order detectors; a band dips
+while the voice is within 20 dB of that band's loud level AND within 30 dB of its loudest band AND the wet comes within
+30 dB of the voice there; 3 ms attack, 20 ms release; the 18 gains solved together through the inverse of the bells'
+overlap matrix; state-variable bells, gains gliding every sample (0.7 ms) - artefacts 106 - 109 dB down (floor 112 - 115).
+On the artist's vocal (one wet gain for all variants; masking = wet / voice in the cells the voice uses): UNMASK 75 % =
+-20.8 dB for 3.5 dB of space (2.4 in the free bands) vs VOICE DUCK 6 dB = -20.3 dB for 5.7 (5.7). Consonant clarity (the
+2 - 6 kHz envelope range) improves less than with VOICE DUCK, which also clears the gaps between syllables - the two
+combine (Unmasked Hall).
+Rejected: STFT processing (latency); per-band peak tracking at 3 dB/s (a quiet band became "active" at its own level);
+a 46 dB share window (a 1 kHz voice leaked into the 5 kHz detector at -45 dB).

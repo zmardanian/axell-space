@@ -5,6 +5,7 @@
 //       delay sync note time feedback pingpong dlylow dlyhigh drive dlydb dlytorev
 //       essduck essdb voiceduck release mix output bpm block
 #include "../Source/Engine.h"
+#include "../Source/Presets.h"
 #include "WavIO.h"
 
 #include <cstdio>
@@ -49,6 +50,10 @@ static void setKey (axs::Params& p, const std::string& k, double v, int& block)
     else if (k == "freeze") p.freeze = v != 0;
     else if (k == "presync") p.preSync = v != 0;
     else if (k == "prenote") p.preNote = (int) v;
+    else if (k == "dlymode") p.dlyMode = (int) v;
+    else if (k == "wow") p.wowFlutter = (float) v;
+    else if (k == "diffuse") p.diffuse = (float) v;
+    else if (k == "unmask") p.unmask = (float) v;
     else if (k == "block") block = (int) v;
     else std::fprintf (stderr, "unknown key %s\n", k.c_str());
 }
@@ -84,8 +89,16 @@ int main (int argc, char** argv)
     {
         const std::string s = argv[i];
         const auto eq = s.find ('=');
-        if (eq != std::string::npos)
-            setKey (p, s.substr (0, eq), std::atof (s.c_str() + eq + 1), block);
+        if (eq == std::string::npos)
+            continue;
+        if (s.substr (0, eq) == "preset")   // a factory preset (by index) as the starting point; later keys change it
+        {
+            const int k = std::atoi (s.c_str() + eq + 1);
+            if (k >= 0 && k < (int) axs::factoryPresets().size())
+                p = axs::factoryPresets()[(size_t) k].p;
+            continue;
+        }
+        setKey (p, s.substr (0, eq), std::atof (s.c_str() + eq + 1), block);
     }
     if (a.ch.size() == 1)
         a.ch.push_back (a.ch[0]);

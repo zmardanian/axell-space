@@ -1,5 +1,31 @@
 # Changelog
 
+## 3.0.0 - 2026-10-30
+**The delay gets a character, the effects learn to step out of the voice's way**, measured on the artist's dry vocal:
+- **UNMASK** (new): the reverb and the delay step back only where they would cover the voice - per third of an octave,
+  while the voice uses that band - and stay full everywhere else (the air while a vowel sings, the body while an ess
+  hisses). On the artist's vocal, against VOICE DUCK at the same clarity (6 dB): 2.2 dB more of the space kept, 3.3 dB
+  more in the bands the voice leaves free. Eighteen bells solved together (their overlaps cancel), gains gliding every
+  sample: no zipper (artefacts at least 106 dB down). A live strip in the display shows what it carves out.
+- **Delay MODE** (new): **CLEAN** (the 1.0 / 2.0 delay, bit for bit), **TAPE** (recorded on tape: soft, slightly
+  asymmetric saturation at the record head, a head bump, each pass about 6.5 dB darker at 10 kHz, wow and flutter
+  0.2 - 0.3 % like a real machine), **ANALOG** (a bucket-brigade line: dark from the first repeat, soft clipping, a hint
+  of clock jitter). TAPE and ANALOG never run away: FEEDBACK 95 % with DRIVE dies away. A mode change crossfades
+  what is heard and what is written, so repeats already on their way change character without a click.
+- **WOW & FLUTTER** (new): 40 % = a healthy machine (1.5 cents), 100 % = a worn one (4 cents); a centred voice stays
+  exactly centred.
+- **DIFFUSE** (new): each repeat smears a little more than the last, from echoes to a soft trail - still on the beat
+  (within 0.3 ms).
+- **Presets**: Vocal Plate, Hall Hook, 1/4 Throw, Dotted 1/8 Space, Ad-lib Tail and both sends now use UNMASK (on the
+  artist's vocal: the voice 3.3 dB less covered and the consonants clearer, for 1.5 - 2 dB less space); Slap Back is a
+  tape slap (the voice 1.35 dB less covered, consonants 0.6 dB clearer); new: **Tape Echo**, **Analog Dub**, **Diffuse
+  Trail**, **Unmasked Hall** (2.0's Hall Hook's consonant clarity with the voice 5.8 dB less covered).
+- **Your sessions are safe**: sessions saved with 2.0 render bit-identically to 2.0.0, sessions saved with 1.0 to
+  1.0.1 (every factory preset, checked by the independent audit).
+- CPU 4.6 - 5.4 % of one core with UNMASK on (2.0: 3.4 - 4.1 %); UNMASK at 0 % costs nothing.
+- Verified: DSP 265, plugin 34, ASan + UBSan clean, independent audit 80/80, pluginval strictness 10, VST3 validator
+  47/47.
+
 ## 2.0.0 - 2026-10-30
 **A new reverb core**, measured on the artist's dry vocal and against a respected commercial plate (the artist's own
 licence; measurement only) and an open-source hall / room / plate (a benchmark only):
