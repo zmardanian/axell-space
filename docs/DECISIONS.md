@@ -121,3 +121,11 @@ gate open ~170 ms too long), hold = TIME, open in 2 ms, close in 15 ms. REVERSE:
 each reading the previous segment backwards, sin^2 windows (sum = 1). A SHAPE change fades like a TYPE change.
 Rejected: a tempo-synced TIME (left for later: ms first, measured); convolution with downloaded room recordings (licences
 and size; the modelled rooms are our own data).
+
+## S11 - 4.0.1: the same sound, a little lighter
+Part of the suite-wide optimisation campaign (profile of a 60 s vocal: reverb 67 %, the shared sibilance detector
+for ESS DUCK 21 %). Rule: byte-identical output.
+- **Kept (axell-core):** the detector's spectral flatness from one log per frame (D1); inline FFT products (V1).
+- **Verified:** 134 renders vs the released 4.0.0 (26 presets + 40 seeded random settings, vocal + mix):
+  byte-identical; plugin process time -1.2 %.
+- **Not attempted:** the reverb itself (already vectorised in 4.0; any faster form would change its output).

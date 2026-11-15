@@ -67,12 +67,12 @@ PASS  ANALOG + DIFFUSE 60 %: repeat 1 on time (250 ms, energy centroid) @ 44.1 k
 PASS  ANALOG + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 44.1 kHz                                                   0.2083 ms  [-1 .. 1]
 PASS  TAPE: a centred voice's repeats stay centred (L - R re L) @ 44.1 kHz                                       -300.0000 dB  [-400 .. -100]
 PASS  ANALOG: a centred voice's repeats stay centred (L - R re L) @ 44.1 kHz                                     -300.0000 dB  [-400 .. -100]
-PASS  TAPE, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 44.1 kHz                     -65.2412 dB  [-400 .. -30]
+PASS  TAPE, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 44.1 kHz                     -65.2372 dB  [-400 .. -30]
 PASS  ANALOG, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 44.1 kHz                   -50.2539 dB  [-400 .. -30]
 PASS  delay mode change CLEAN > TAPE > ANALOG: no step larger than the tone's own @ 44.1 kHz                        1.0017 x  [0 .. 1.05]
 PASS  UNMASK 100 %: the wet steps back where the voice sings (1 kHz; up to 12 dB) @ 44.1 kHz                      -11.9421 dB  [-13 .. -10.5]
 PASS  UNMASK 100 %: the wet keeps the band the voice leaves free (5 kHz) @ 44.1 kHz                                -0.0440 dB  [-0.5 .. 0.5]
-PASS  UNMASK on a gated voice: artefacts above 5 kHz re the wet tone (floor without UNMASK: -115 dB) @ 44.1 kHz   -108.1529 dB  [-400 .. -90]
+PASS  UNMASK on a gated voice: artefacts above 5 kHz re the wet tone (floor without UNMASK: -115 dB) @ 44.1 kHz   -108.1534 dB  [-400 .. -90]
 PASS  UNMASK 0 %: the output is the 2.0 output, bit for bit @ 44.1 kHz                                              0.0000   [0 .. 0]
 PASS  UNMASK 30 % acts (sanity) @ 44.1 kHz                                                                          0.1197   [0.0001 .. 10]
 PASS  Vocal Booth: decay at 1 kHz re the room's physics (Eyring) @ 44.1 kHz                                         0.9557 x  [0.85 .. 1.15]
@@ -191,19 +191,19 @@ PASS  CLEAN + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 48.0 kHz                
 PASS  TAPE: repeat 1 on time (250 ms, energy centroid) @ 48.0 kHz                                                   0.0767 ms  [-0.6 .. 0.6]
 PASS  TAPE: repeat 2 on time (500 ms) @ 48.0 kHz                                                                    0.1641 ms  [-1 .. 1]
 PASS  TAPE + DIFFUSE 60 %: repeat 1 on time (250 ms, energy centroid) @ 48.0 kHz                                    0.0568 ms  [-0.6 .. 0.6]
-PASS  TAPE + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 48.0 kHz                                                     0.1011 ms  [-1 .. 1]
+PASS  TAPE + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 48.0 kHz                                                     0.1012 ms  [-1 .. 1]
 PASS  ANALOG: repeat 1 on time (250 ms, energy centroid) @ 48.0 kHz                                                 0.1403 ms  [-0.6 .. 0.6]
 PASS  ANALOG: repeat 2 on time (500 ms) @ 48.0 kHz                                                                  0.2994 ms  [-1 .. 1]
 PASS  ANALOG + DIFFUSE 60 %: repeat 1 on time (250 ms, energy centroid) @ 48.0 kHz                                  0.1109 ms  [-0.6 .. 0.6]
 PASS  ANALOG + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 48.0 kHz                                                   0.2099 ms  [-1 .. 1]
 PASS  TAPE: a centred voice's repeats stay centred (L - R re L) @ 48.0 kHz                                       -300.0000 dB  [-400 .. -100]
 PASS  ANALOG: a centred voice's repeats stay centred (L - R re L) @ 48.0 kHz                                     -300.0000 dB  [-400 .. -100]
-PASS  TAPE, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 48.0 kHz                     -64.2703 dB  [-400 .. -30]
+PASS  TAPE, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 48.0 kHz                     -64.2692 dB  [-400 .. -30]
 PASS  ANALOG, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 48.0 kHz                   -49.5413 dB  [-400 .. -30]
 PASS  delay mode change CLEAN > TAPE > ANALOG: no step larger than the tone's own @ 48.0 kHz                        1.0018 x  [0 .. 1.05]
 PASS  UNMASK 100 %: the wet steps back where the voice sings (1 kHz; up to 12 dB) @ 48.0 kHz                      -11.9397 dB  [-13 .. -10.5]
 PASS  UNMASK 100 %: the wet keeps the band the voice leaves free (5 kHz) @ 48.0 kHz                                -0.0447 dB  [-0.5 .. 0.5]
-PASS  UNMASK on a gated voice: artefacts above 5 kHz re the wet tone (floor without UNMASK: -114 dB) @ 48.0 kHz   -106.0089 dB  [-400 .. -90]
+PASS  UNMASK on a gated voice: artefacts above 5 kHz re the wet tone (floor without UNMASK: -114 dB) @ 48.0 kHz   -106.0077 dB  [-400 .. -90]
 PASS  UNMASK 0 %: the output is the 2.0 output, bit for bit @ 48.0 kHz                                              0.0000   [0 .. 0]
 PASS  UNMASK 30 % acts (sanity) @ 48.0 kHz                                                                          0.1365   [0.0001 .. 10]
 PASS  Vocal Booth: decay at 1 kHz re the room's physics (Eyring) @ 48.0 kHz                                         1.1106 x  [0.85 .. 1.15]
@@ -320,7 +320,7 @@ PASS  DELAY switched off at 0.6 s: the repeat due at 1.0 s still sounds @ 96.0 k
 PASS  CLEAN + DIFFUSE 60 %: repeat 1 on time (250 ms, energy centroid) @ 96.0 kHz                                   0.0211 ms  [-0.6 .. 0.6]
 PASS  CLEAN + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 96.0 kHz                                                    0.0346 ms  [-1 .. 1]
 PASS  TAPE: repeat 1 on time (250 ms, energy centroid) @ 96.0 kHz                                                   0.0817 ms  [-0.6 .. 0.6]
-PASS  TAPE: repeat 2 on time (500 ms) @ 96.0 kHz                                                                    0.1782 ms  [-1 .. 1]
+PASS  TAPE: repeat 2 on time (500 ms) @ 96.0 kHz                                                                    0.1781 ms  [-1 .. 1]
 PASS  TAPE + DIFFUSE 60 %: repeat 1 on time (250 ms, energy centroid) @ 96.0 kHz                                    0.0612 ms  [-0.6 .. 0.6]
 PASS  TAPE + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 96.0 kHz                                                     0.1085 ms  [-1 .. 1]
 PASS  ANALOG: repeat 1 on time (250 ms, energy centroid) @ 96.0 kHz                                                 0.1413 ms  [-0.6 .. 0.6]
@@ -329,12 +329,12 @@ PASS  ANALOG + DIFFUSE 60 %: repeat 1 on time (250 ms, energy centroid) @ 96.0 k
 PASS  ANALOG + DIFFUSE 60 %: repeat 2 on time (500 ms) @ 96.0 kHz                                                   0.2128 ms  [-1 .. 1]
 PASS  TAPE: a centred voice's repeats stay centred (L - R re L) @ 96.0 kHz                                       -300.0000 dB  [-400 .. -100]
 PASS  ANALOG: a centred voice's repeats stay centred (L - R re L) @ 96.0 kHz                                     -300.0000 dB  [-400 .. -100]
-PASS  TAPE, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 96.0 kHz                     -60.0072 dB  [-400 .. -30]
+PASS  TAPE, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 96.0 kHz                     -60.0140 dB  [-400 .. -30]
 PASS  ANALOG, FEEDBACK 95 %, DRIVE 60: 14 s later the repeats are 30 dB down or more @ 96.0 kHz                   -48.5150 dB  [-400 .. -30]
 PASS  delay mode change CLEAN > TAPE > ANALOG: no step larger than the tone's own @ 96.0 kHz                        1.0016 x  [0 .. 1.05]
 PASS  UNMASK 100 %: the wet steps back where the voice sings (1 kHz; up to 12 dB) @ 96.0 kHz                      -11.9300 dB  [-13 .. -10.5]
 PASS  UNMASK 100 %: the wet keeps the band the voice leaves free (5 kHz) @ 96.0 kHz                                -0.0480 dB  [-0.5 .. 0.5]
-PASS  UNMASK on a gated voice: artefacts above 5 kHz re the wet tone (floor without UNMASK: -112 dB) @ 96.0 kHz   -108.0473 dB  [-400 .. -90]
+PASS  UNMASK on a gated voice: artefacts above 5 kHz re the wet tone (floor without UNMASK: -112 dB) @ 96.0 kHz   -108.0488 dB  [-400 .. -90]
 PASS  UNMASK 0 %: the output is the 2.0 output, bit for bit @ 96.0 kHz                                              0.0000   [0 .. 0]
 PASS  UNMASK 30 % acts (sanity) @ 96.0 kHz                                                                          0.1478   [0.0001 .. 10]
 PASS  Vocal Booth: decay at 1 kHz re the room's physics (Eyring) @ 96.0 kHz                                         1.0194 x  [0.85 .. 1.15]
@@ -392,10 +392,45 @@ PASS  every preset: NaN / Inf in -> finite output (non-finite samples) @ 96.0 kH
 PASS  every preset: blocks of 512 vs random 1-2048 (max difference) @ 96.0 kHz                                      0.0000   [0 .. 1e-06]
 PASS  TYPE switched while ringing: largest sample step re the input's @ 96.0 kHz                                    0.9938 x  [0 .. 1.6]
 PASS  no memory allocation in process() (every preset, random blocks)                                               0.0000 allocs  [0 .. 0]
-PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Vocal Plate (% of one core)                                          4.2500 %  [0 .. 6]
-PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Hall Hook (% of one core)                                            4.6600 %  [0 .. 6]
-PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Ad-lib Tail (% of one core)                                          4.9584 %  [0 .. 6]
-PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Real: Studio Live Room (% of one core)                               5.6830 %  [0 .. 6]
-PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Real: Wood Chapel (% of one core)                                    5.5639 %  [0 .. 6]
-PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Reverse Swell (% of one core)                                        4.3458 %  [0 .. 6]
-ALL PASS: 400 of 400 checks passed (80.2 s)
+PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Vocal Plate (% of one core)                                          4.2626 %  [0 .. 6]
+PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Hall Hook (% of one core)                                            4.6388 %  [0 .. 6]
+PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Ad-lib Tail (% of one core)                                          5.0987 %  [0 .. 6]
+PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Real: Studio Live Room (% of one core)                               5.6480 %  [0 .. 6]
+PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Real: Wood Chapel (% of one core)                                    5.5231 %  [0 .. 6]
+PASS  CPU, stereo @ 48 kHz, 128-sample blocks, Reverse Swell (% of one core)                                        4.4186 %  [0 .. 6]
+ALL PASS: 400 of 400 checks passed (80.7 s)
+PASS  a pre-2.0 session (no engine in its state) keeps the 1.0 reverb
+PASS  a 2.0 session keeps the 2.0 reverb
+PASS  a 2.0 session (no 3.0 / 4.0 parameters) keeps the 2.0 sound: CLEAN delay, DIFFUSE 0, UNMASK 0, no real space
+PASS  a factory preset selects the 2.0 reverb
+PASS  parameter count = 41
+PASS  every parameter in its frozen place, version hint 1 (1.0) / 2 (2.0) / 3 (3.0) / 4 (4.0)
+PASS  a new instance uses the 2.0 reverb core
+PASS  defaults = the engine's defaults (= the Init preset)
+PASS  no latency; tail length covers the longest reverb
+PASS  every factory preset applies its exact settings (26)
+PASS  state restore: every parameter identical
+PASS  A/B: each slot keeps its own settings
+PASS  state restore: the preset name comes back (1/4 Throw)
+PASS  a name given by the Dojo is shown and saved again
+PASS  a 1.0.0 state (no preset name) loads every parameter
+PASS  A/B: each slot keeps its preset name
+PASS  MIX turned to 0 %: after its glide, the output is the input, sample for sample @ 44.1 kHz
+PASS  MIX 30 %: the effect is heard, every sample finite @ 44.1 kHz
+PASS  host bypass: after the 10 ms crossfade, exactly the input @ 44.1 kHz
+PASS  MIX turned to 0 %: after its glide, the output is the input, sample for sample @ 48.0 kHz
+PASS  MIX 30 %: the effect is heard, every sample finite @ 48.0 kHz
+PASS  host bypass: after the 10 ms crossfade, exactly the input @ 48.0 kHz
+PASS  MIX turned to 0 %: after its glide, the output is the input, sample for sample @ 96.0 kHz
+PASS  MIX 30 %: the effect is heard, every sample finite @ 96.0 kHz
+PASS  host bypass: after the 10 ms crossfade, exactly the input @ 96.0 kHz
+PASS  MIX turned to 0 %: after its glide, the output is the input, sample for sample @ 192.0 kHz
+PASS  MIX 30 %: the effect is heard, every sample finite @ 192.0 kHz
+PASS  host bypass: after the 10 ms crossfade, exactly the input @ 192.0 kHz
+PASS  mono layout accepted
+PASS  mono, blocks larger than announced: processes, finite
+PASS  without a host transport the tempo is 120 BPM
+PASS  editor: opens / closes 5x while processing (100 % size)
+PASS  editor: resizable 75-200 %
+PASS  editor: re-opens at the last used size (150 %)
+ALL PASS: 34 of 34 plugin checks passed

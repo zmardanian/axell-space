@@ -83,6 +83,9 @@ int main (int argc, char** argv)
     shoot ("space-adlib", 1.0f, preset ("Ad-lib Tail"));
     shoot ("space-slap", 1.0f, preset ("Slap Back"));
     shoot ("space-75pct", 0.75f, preset ("Hall Hook"));
+    shoot ("space-real", 1.0f, preset ("Real: Studio Live Room"));
+    shoot ("space-reverse", 1.0f, preset ("Reverse Swell"));
+    shoot ("space-tape", 1.0f, preset ("Tape Echo"));
     shoot ("space-hidpi2x", 1.0f, preset ("Vocal Plate"), 2.0f);   // HiDPI: twice the pixels
     return 0;
 }

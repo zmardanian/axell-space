@@ -1,5 +1,15 @@
 # Changelog
 
+## 4.0.1 - 2026-11-15
+- **The same sound, a little lighter** (a suite-wide optimisation; the rule: byte-for-byte the same output). ESS
+  DUCK's sibilance detector takes one logarithm per frame instead of 192, and the shared FFT multiplies complex
+  numbers inline.
+- Output byte-for-byte the same as 4.0.0: 134 renders through the released 4.0.0 and the new build (all 26 factory
+  presets and 40 random settings of every parameter, on a vocal and a mix).
+- Plugin process time over those renders -1.2 % (the reverb, unchanged, is most of Space's work).
+- Verified: DSP 400 + plugin 34 checks (ASan + UBSan clean), independent audit 91/91, core 143/143, pluginval
+  strictness 10 (+10 extra runs, 0 crashes), VST3 validator 47/47.
+
 ## 4.0.0 - 2026-10-30
 **Real rooms, and the tail's shape**:
 - **REAL SPACES** (new): eight real rooms modelled from their size and wall materials - Vocal Booth, Tiled Bathroom,
