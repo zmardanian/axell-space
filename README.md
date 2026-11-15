@@ -1,6 +1,13 @@
-# Axell Space (VST3, Linux)
+# Axell Space (VST3, Linux + Windows)
 
 [![CI](https://github.com/zmardanian/axell-space/actions/workflows/ci.yml/badge.svg)](https://github.com/zmardanian/axell-space/actions/workflows/ci.yml)
+<!-- badges -->
+[![Latest release](https://img.shields.io/github/v/release/zmardanian/axell-space?style=flat-square&label=release&color=9c7434)](https://github.com/zmardanian/axell-space/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/zmardanian/axell-space/total?style=flat-square&color=2a1f17)](https://github.com/zmardanian/axell-space/releases)
+![Linux + Windows](https://img.shields.io/badge/Linux%20%2B%20Windows-x86__64-2a1f17?style=flat-square)
+![VST3](https://img.shields.io/badge/format-VST3-2a1f17?style=flat-square)
+[![Licence AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-6b5a4a?style=flat-square)](LICENSE)
+<!-- /badges -->
 
 The space of the Axell suite: a reverb and a tempo-synced delay, made for vocals.
 - **REVERB**: BOOTH, ROOM, PLATE and HALL from a 32-line, true-stereo feedback delay network with diffusion inside
@@ -16,13 +23,16 @@ The space of the Axell suite: a reverb and a tempo-synced delay, made for vocals
 - **VOICE DUCK**: the effects step back while you rap and bloom in the gaps; **UNMASK** steps them back only in the
   bands your voice is using at that moment, so the space stays around the words.
 
-> **Part of Axell's Dojo** - the Axell Signature suite for rap vocals, beats and masters on Linux:
-> [Penta EQ](https://github.com/zmardanian/axell-penta-eq) · [Duo Compressor](https://github.com/zmardanian/axell-duo-compressor) ·
+> **Part of Axell's Dojo** - the Axell Signature suite for rap vocals, beats and masters, on Linux and Windows:
+> [Penta EQ](https://github.com/zmardanian/axell-penta-eq) ·
+> [Duo Compressor](https://github.com/zmardanian/axell-duo-compressor) ·
 > [Gate](https://github.com/zmardanian/axell-gate) · [De-Reverb](https://github.com/zmardanian/axell-dereverb) ·
 > [Velvet](https://github.com/zmardanian/axell-velvet) · [Master](https://github.com/zmardanian/axell-master) ·
-> [Space](https://github.com/zmardanian/axell-space) · [Forbidden Seal](https://github.com/zmardanian/axell-forbidden-seal), installed, updated and tuned to your voice by the
-> [Axell Signature Dojo](https://github.com/zmardanian/axell-signature-dojo). The plugins share one core library
-> (`external/axell-core`): a breakthrough in one plugin becomes a feature of the next.
+> **Space** · [Forbidden Seal](https://github.com/zmardanian/axell-forbidden-seal) ·
+> [Axell 76](https://github.com/zmardanian/axell-76)
+> Installed, updated and tuned to your voice by the [Axell Signature Dojo](https://github.com/zmardanian/axell-signature-dojo)
+> (one Windows installer carries the whole suite). The plugins share one core library (`external/axell-core`):
+> a breakthrough in one plugin becomes a feature of the next.
 
 ![Axell Space](docs/screenshots/space.png)
 
@@ -130,6 +140,20 @@ Download `AxellSpace-4.0.0-linux-x86_64.tar.gz` from the
 
 Then in REAPER: Options > Preferences > Plug-ins > VST > Re-scan. On a vocal track use MIX 15-30 %; on a send / aux
 track use one of the "Send:" presets (100 % wet).
+
+
+## Install (Windows)
+
+Windows 10 / 11, 64-bit. Download `AxellSpace-<version>-windows-x64.tar.gz` from the
+[latest release](https://github.com/zmardanian/axell-space/releases/latest) (optional: check it against `SHA256SUMS.txt`),
+extract it (Windows 11 opens .tar.gz directly; on Windows 10 use 7-Zip or `tar -xzf` in a terminal) and copy the folder
+`Axell Space.vst3` into `C:\Program Files\Common Files\VST3`. Then rescan plugins in your DAW.
+Or install the whole suite in one go with the Axell Signature Suite installer from the
+[Axell Signature Dojo releases](https://github.com/zmardanian/axell-signature-dojo/releases/latest) - the Dojo then keeps it up to date.
+
+Every Windows build is made by GitHub Actions from this repository, passes the same test suites and pluginval
+(strictness 10) as the Linux build, and is checked to sound the same as it (largest difference far below -90 dBFS,
+most often bit-identical). The plugin is not code-signed yet; DAWs load it directly.
 
 ## Build (Bazzite / any Linux, inside a distrobox)
 
