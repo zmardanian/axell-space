@@ -289,7 +289,7 @@ command line; `research/irmeasure.py` measures impulse responses (decay, density
 **Free forever, kept alive by you.** Axell Space costs nothing and never will - no subscriptions, no licence keys. If it has earned a place in your mixes, you can [support the Dojo on Ko-fi](https://ko-fi.com/axellyobag) - one-time or monthly, from €3.
 
 
-Axell Yobag - axellpetre@protonmail.com. Issues on GitHub are welcome too.
+Axell Yobag - contact@axellsdojo.com. Issues on GitHub are welcome too.
 
 Licence: GNU AGPLv3 (`LICENSE`); third-party components and the CMU ARCTIC and VCTK notices (training data of the
 sibilance network) in `THIRD_PARTY_NOTICES.md`. No code, data, impulse responses or graphics of any commercial

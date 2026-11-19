@@ -31,7 +31,7 @@ add_subdirectory(${AXELL_CORE_DIR} axell-core)
 
 juce_add_plugin(AxellSpace
   COMPANY_NAME              "Axell Yobag"
-  COMPANY_EMAIL             "axellpetre@protonmail.com"
+  COMPANY_EMAIL             "contact@axellsdojo.com"
   BUNDLE_ID                 com.axellyobag.axellspace
   PLUGIN_MANUFACTURER_CODE  Axyb
   PLUGIN_CODE               Spc1
