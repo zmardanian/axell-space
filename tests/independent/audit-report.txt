@@ -90,4 +90,4 @@ PASS  REAL Car Park: decay at 1 kHz (T30) re its physics (2.92 s): 2.885 s (-1 %
 PASS  GATED 300 ms: open 0.12 - 0.22 s after the voice, closed 0.45 s after it (re during): -3.3 / -87.6 dB
 PASS  REVERSE 400 ms: an impulse's tail comes back as a swell (its loudest moment after the onset): 396 ms
 
-ALL PASS: 91 of 91 independent checks passed (50 s)
+ALL PASS: 91 of 91 independent checks passed (51 s)
