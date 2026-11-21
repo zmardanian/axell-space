@@ -805,6 +805,43 @@ static void testShape (double fs)
     }
 }
 
+// 4.0.3: DELAY / REVERB switched on or off mid-signal - no click (the section input was cut on the sample; the cut
+// was stored in the delay line and came back one repeat later as a click). High-frequency energy (2nd difference)
+// around and after the switch must stay near the steady sound on either side.
+static void testSwitchClicks (double fs)
+{
+    for (int section = 0; section < 2; ++section)
+        for (int dir = 0; dir < 2; ++dir)
+        {
+            Params p;
+            p.sync = false; p.timeMs = 200.0f; p.feedback = 30.0f; p.mix = 50.0f; p.essDuck = false;
+            p.reverbOn = section == 1 ? dir == 0 : true;
+            p.delayOn = section == 0 ? dir == 0 : false;
+            Engine e;
+            e.setParams (p); e.prepare (fs, 512); e.setParams (p);
+            const int n = (int) (3 * fs), sw = (int) fs;
+            std::vector<float> l ((size_t) n), r ((size_t) n);
+            for (int i = 0; i < n; ++i) l[(size_t) i] = r[(size_t) i] = 0.2f * (float) std::sin (2.0 * 3.14159265358979 * 100.0 * i / fs);
+            for (int pos = 0; pos < n; pos += 512)
+            {
+                if (pos == (sw / 512) * 512)
+                {
+                    if (section == 0) p.delayOn = ! p.delayOn; else p.reverbOn = ! p.reverbOn;
+                    e.setParams (p);
+                }
+                float* io[2] = { l.data() + pos, r.data() + pos };
+                e.process (io, 2, std::min (512, n - pos));
+            }
+            auto hf = [&] (int a, int b) { double m = 0; const int w = (int) (0.005 * fs);
+                for (int i = a; i + w < b; i += w / 2) { double e2 = 0; for (int k = i; k < i + w; ++k) { const double d = l[(size_t) k] - 2.0 * l[(size_t) k - 1] + l[(size_t) k - 2]; e2 += d * d; } m = std::max (m, e2 / w); }
+                return 10.0 * std::log10 (m + 1e-30); };
+            const double steady = std::max (hf ((int) (0.5 * fs), sw - 64), hf ((int) (2.4 * fs), n - 64));
+            const double around = hf (sw - 64, (int) (2.4 * fs));
+            check (std::string ("switching ") + (section == 0 ? "DELAY" : "REVERB") + (dir == 0 ? " off" : " on")
+                   + " mid-signal: HF burst re the steady sound (no click)" + rateName (fs), around - steady, -200.0, 6.0, "dB");
+        }
+}
+
 int main (int argc, char** argv)
 {
     const bool quick = argc > 1 && std::strcmp (argv[1], "--quick") == 0;
@@ -821,6 +858,7 @@ int main (int argc, char** argv)
         testShape (fs);
         testDucking (fs);
         testSafety (fs);
+        testSwitchClicks (fs);
     }
     testAllocAndCpu (quick);
     const double sec = std::chrono::duration<double> (std::chrono::steady_clock::now() - t0).count();

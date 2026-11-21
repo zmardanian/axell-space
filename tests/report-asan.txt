@@ -96,8 +96,12 @@ PASS  every preset: silence in -> silence out (non-zero samples) @ 48.0 kHz     
 PASS  every preset: NaN / Inf in -> finite output (non-finite samples) @ 48.0 kHz                                   0.0000   [0 .. 0]
 PASS  every preset: blocks of 512 vs random 1-2048 (max difference) @ 48.0 kHz                                      0.0000   [0 .. 1e-06]
 PASS  TYPE switched while ringing: largest sample step re the input's @ 48.0 kHz                                    1.0039 x  [0 .. 1.6]
+PASS  switching DELAY off mid-signal: HF burst re the steady sound (no click) @ 48.0 kHz                            3.4105 dB  [-200 .. 6]
+PASS  switching DELAY on mid-signal: HF burst re the steady sound (no click) @ 48.0 kHz                             5.1289 dB  [-200 .. 6]
+PASS  switching REVERB off mid-signal: HF burst re the steady sound (no click) @ 48.0 kHz                           4.5194 dB  [-200 .. 6]
+PASS  switching REVERB on mid-signal: HF burst re the steady sound (no click) @ 48.0 kHz                            2.1159 dB  [-200 .. 6]
 PASS  no memory allocation in process() (every preset, random blocks)                                               0.0000 allocs  [0 .. 0]
-ALL PASS: 99 of 99 checks passed (100.7 s)
+ALL PASS: 103 of 103 checks passed (102.3 s)
 PASS  a pre-2.0 session (no engine in its state) keeps the 1.0 reverb
 PASS  a 2.0 session keeps the 2.0 reverb
 PASS  a 2.0 session (no 3.0 / 4.0 parameters) keeps the 2.0 sound: CLEAN delay, DIFFUSE 0, UNMASK 0, no real space

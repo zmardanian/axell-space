@@ -1130,6 +1130,8 @@ public:
         typeFade = 1.0f;
         pendingType = -1;
         sample = 0;
+        dlySend = params.delayOn ? 1.0f : 0.0f;
+        revSend = params.reverbOn ? 1.0f : 0.0f;
     }
 
     void setParams (const Params& p) noexcept
@@ -1171,6 +1173,7 @@ public:
         const float relK = 1.0f - std::exp (-1.0f / (std::max (10.0f, params.duckReleaseMs) * 0.001f * (float) fs));
         const float atkK = 1.0f - std::exp (-1.0f / (0.005f * (float) fs));
         const float envRelK = 1.0f - std::exp (-1.0f / (0.025f * (float) fs));   // the level follower: fast, fixed
+        const float swK = 1.0f - std::exp (-1.0f / (0.003f * (float) fs));       // DELAY / REVERB on-off: 3 ms ramps
         for (int i = 0; i < n; ++i)
         {
             float xL = L[i], xR = R[i];
@@ -1191,16 +1194,27 @@ public:
             lookLine[1].push (xR);
             const float wL = lookLine[0].tap (look) * essGain, wR = lookLine[1].tap (look) * essGain;
             // the delay
+            // 4.0.3: a section's input fades in / out over ~3 ms when it is switched (it was cut on the sample: the cut was
+            // stored in the delay line and played back as a click one repeat later); exactly 1 or 0 once settled
+            auto sw = [swK] (float& g, bool on)
+            {
+                const float t = on ? 1.0f : 0.0f;
+                g += (t - g) * swK;
+                if (std::abs (t - g) < 1.0e-4f) g = t;
+            };
+            sw (dlySend, params.delayOn);
+            sw (revSend, params.reverbOn);
             float dL = 0.0f, dR = 0.0f;
             if (params.delayOn || delayTail)
-                dly.process (params.delayOn ? wL : 0.0f, params.delayOn ? wR : 0.0f, dL, dR);
+                dly.process (wL * dlySend, wR * dlySend, dL, dR);
             // the reverb: its own band-limited input (+ part of the delay)
             float rL = 0.0f, rR = 0.0f;
             if (params.reverbOn || reverbTail)
             {
                 const float send = params.delayToReverb * 0.01f;
-                float iL = params.reverbOn ? revHc[0].process (revLc[0].process (wL + send * dL)) : 0.0f;
-                float iR = params.reverbOn ? revHc[1].process (revLc[1].process (wR + send * dR)) : 0.0f;
+                const bool feed = params.reverbOn || revSend > 0.0f;
+                float iL = feed ? revHc[0].process (revLc[0].process ((wL + send * dL) * revSend)) : 0.0f;
+                float iR = feed ? revHc[1].process (revLc[1].process ((wR + send * dR) * revSend)) : 0.0f;
                 if (activeEngine == 2)
                     rev2.process (iL, iR, rL, rR);   // true stereo
                 else
@@ -1404,6 +1418,7 @@ private:
             g = t;
     }
     float typeFade = 1.0f;
+    float dlySend = 0.0f, revSend = 1.0f;   // the DELAY / REVERB inputs while switching (0..1, ramped)
     int pendingType = -1, lastType = -1, lastSpace = -1, lastShape = -1, forcedEss = -1;
     float lastSize = -1.0f;
     bool reverbTail = false, delayTail = false, wasReverbOn = true, wasDelayOn = false;

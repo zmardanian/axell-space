@@ -129,3 +129,17 @@ for ESS DUCK 21 %). Rule: byte-identical output.
 - **Verified:** 134 renders vs the released 4.0.0 (26 presets + 40 seeded random settings, vocal + mix):
   byte-identical; plugin process time -1.2 %.
 - **Not attempted:** the reverb itself (already vectorised in 4.0; any faster form would change its output).
+
+## S12 - 4.0.3: no click when a section is switched
+Found by the suite audit (every switch and choice of every plugin toggled on a 100 Hz tone, high-frequency energy at
+the switch vs the steady sound): DELAY on / off +16 dB through the plugin; the DSP test on the 4.0.2 engine: DELAY
+39-40 dB, REVERB 31 dB.
+- **Cause:** `params.delayOn ? wL : 0` (and the same for the reverb's input) - the input was cut on the sample. A
+  section switched off keeps ringing (its tail runs out), so the cut itself went into the delay line and played back
+  one repeat later.
+- **Kept:** each section's input is multiplied by a 3 ms one-pole ramp toward 1 or 0, snapped to exactly 1 / 0 once
+  within 1e-4 - in steady state the multiplication is by exactly 1.0 (or the section is not fed), so the output is
+  byte-identical to 4.0.2 (134 renders). New DSP test: 2-5 dB at every rate, both sections, both directions.
+- **Rejected:** a longer fade (20 ms) - it would audibly soften the start of a word that arrives exactly at the
+  switch; 3 ms is below what the ear hears as a fade and far above a click.
+

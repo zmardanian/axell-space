@@ -1,5 +1,16 @@
 # Changelog
 
+## 4.0.3 - 2026-11-21
+- **Fixed: switching DELAY or REVERB on or off clicked.** The section's input was cut (or started) on the sample; for
+  the delay the cut was even stored in its line and came back as a click one repeat later. Now a section's input fades
+  in or out over about 3 ms - the repeats and the tail still ring out exactly as before. Measured on a 100 Hz tone:
+  the high-frequency burst at the switch fell from 31-40 dB above the steady sound to 2-5 dB (no audible click).
+- **Nothing else changed**: with the switches left alone the sound is byte-for-byte the same as 4.0.2 (134 renders
+  through the released 4.0.2 and the new build: all 26 factory presets and 41 random settings of every parameter, on a
+  vocal and a mix).
+- Verified: DSP 412 checks (12 new for the switches) + plugin 34, ASan + UBSan clean, independent audit 91/91,
+  pluginval strictness 10, VST3 validator 47/47, pluginval 2.0 real-time check 31/31.
+
 ## 4.0.2 - 2026-11-20
 - **The name in the suite's script wordmark.** The title now reads "Axell Space" in Great Vibes, in the plugin's own
   colour - the same wordmark as axellsdojo.com and the READMEs (SIL Open Font License; credited in THIRD_PARTY_NOTICES.md).

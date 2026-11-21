@@ -173,9 +173,9 @@ changed (0.00 dB). On the artist's own dry vocal: 85 % of the ess moments turned
 presets), a real room 5.6-5.7 %; UNMASK at 0 % costs nothing.
 No memory allocation while processing.
 
-**Verified for 4.0.2**: DSP suite 400 checks, plugin suite 34, ASan + UBSan clean, independent audit 91/91,
-pluginval strictness 10, Steinberg's VST3 validator 47/47; 134 renders byte-identical to 4.0.0 (4.0.1 is a small
-speed-up of ESS DUCK's detector and the shared FFT).
+**Verified for 4.0.3**: DSP suite 412 checks, plugin suite 34, ASan + UBSan clean, independent audit 91/91,
+pluginval strictness 10, Steinberg's VST3 validator 47/47, pluginval 2.0 real-time check 31/31; 134 renders
+byte-identical to 4.0.2 (4.0.3 only fades DELAY / REVERB in and out over 3 ms when they are switched: no click).
 
 
 <br>
@@ -205,11 +205,11 @@ most often bit-identical). The plugin is not code-signed yet; DAWs load it direc
 
 Runs on x86_64 Linux with glibc 2.35 or newer: Ubuntu 22.04+, Debian 12+, Linux Mint 21+, Fedora 36+, Arch, Bazzite.
 
-Download `AxellSpace-4.0.2-linux-x86_64.tar.gz` from the
+Download `AxellSpace-4.0.3-linux-x86_64.tar.gz` from the
 [latest release](https://github.com/zmardanian/axell-space/releases/latest) (optional: `sha256sum -c SHA256SUMS.txt`), then:
 
-    tar xzf AxellSpace-4.0.2-linux-x86_64.tar.gz
-    cd AxellSpace-4.0.2-linux-x86_64
+    tar xzf AxellSpace-4.0.3-linux-x86_64.tar.gz
+    cd AxellSpace-4.0.3-linux-x86_64
     ./install.sh
 
 Then in REAPER: Options > Preferences > Plug-ins > VST > Re-scan. On a vocal track use MIX 15-30 %; on a send / aux

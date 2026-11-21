@@ -1,13 +1,12 @@
-Started validating: ~/axell-space/build/AxellSpace_artefacts/Release/VST3/Axell Space.vst3
-Random seed: 0x129c596
+Random seed: 0x2853a3
 Validation started
 Strictness level: 10
 -----------------------------------------------------------------
 Starting tests in: pluginval / Scan for plugins located in: ~/axell-space/build/AxellSpace_artefacts/Release/VST3/Axell Space.vst3...
 Num plugins found: 1
 
-Testing plugin: VST3-Axell Space-b02c4651-8f6f2799
-Axell Yobag: Axell Space v4.0.0
+Testing plugin: VST3-Axell Space-864b6de9-8f6f2799
+Axell Yobag: Axell Space v4.0.3
 Completed tests in pluginval / Scan for plugins located in: ~/axell-space/build/AxellSpace_artefacts/Release/VST3/Axell Space.vst3
 -----------------------------------------------------------------
 Starting tests in: pluginval / Open plugin (cold)...
